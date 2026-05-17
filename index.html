@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Montacargas RF</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <script type="module">
+
+    // ================================
+    // FIREBASE SDK
+    // ================================
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+    import {
+      getFirestore,
+      collection,
+      onSnapshot
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // ================================
+    // CONFIG FIREBASE
+    // ================================
+    const firebaseConfig = {
+
+      apiKey: "TU_API_KEY",
+
+      authDomain: "TU_PROYECTO.firebaseapp.com",
+
+      projectId: "TU_PROJECT_ID",
+
+      storageBucket: "TU_PROYECTO.appspot.com",
+
+      messagingSenderId: "XXXXXX",
+
+      appId: "XXXXXX"
+
+    };
+
+    // ================================
+    // INICIALIZAR FIREBASE
+    // ================================
+    const app = initializeApp(firebaseConfig);
+
+    const db = getFirestore(app);
+
+    // ================================
+    // CARGAR EQUIPOS
+    // ================================
+    const container = document.getElementById("equipos");
+
+    onSnapshot(collection(db, "EQUIPOS"), (snapshot) => {
+
+      container.innerHTML = "";
+
+      snapshot.forEach((doc) => {
+
+        const data = doc.data();
+
+        const activo = data.Activo === true;
+
+        const card = document.createElement("div");
+
+        card.className = "card";
+
+        card.innerHTML = `
+
+          <div class="header">
+
+            <h2>${doc.id}</h2>
+
+            <span class="${
+              activo ? "activo" : "inactivo"
+            }">
+
+              ${
+                activo ? "ACTIVO" : "INACTIVO"
+              }
+
+            </span>
+
+          </div>
+
+          <p><strong>Modelo:</strong> ${data.Modelo || "-"}</p>
+
+          <p><strong>Royal:</strong> ${data.Royal || "-"}</p>
+
+        `;
+
+        container.appendChild(card);
+
+      });
+
+    });
+
+  </script>
+
+  <style>
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:Arial;
+    }
+
+    body{
+      background:#0f172a;
+      color:white;
+      padding:20px;
+    }
+
+    h1{
+      margin-bottom:20px;
+      text-align:center;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+      gap:16px;
+    }
+
+    .card{
+      background:#1e293b;
+      border-radius:16px;
+      padding:20px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.3);
+      border:1px solid #334155;
+    }
+
+    .header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:12px;
+    }
+
+    .activo{
+      background:#16a34a;
+      color:white;
+      padding:6px 12px;
+      border-radius:30px;
+      font-size:12px;
+      font-weight:bold;
+    }
+
+    .inactivo{
+      background:#dc2626;
+      color:white;
+      padding:6px 12px;
+      border-radius:30px;
+      font-size:12px;
+      font-weight:bold;
+    }
+
+    p{
+      margin-top:8px;
+      color:#cbd5e1;
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <h1>MONITOREO MONTACARGAS</h1>
+
+  <div class="grid" id="equipos"></div>
+
+</body>
+</html>
