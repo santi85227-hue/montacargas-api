@@ -10,13 +10,9 @@ res.sendFile(path.join(__dirname, "index.html"));
 });
 
 app.get("/estado", (req, res) => {
-
-```
 res.json({
     Activo: true
 });
-```
-
 });
 
 const PORT = process.env.PORT || 3000;
