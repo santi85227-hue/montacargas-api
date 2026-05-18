@@ -96,9 +96,24 @@
 
         container.appendChild(card);
 
+        const boton = card.querySelector("button");
+        boton.addEventListener("click", async () => {
+        ```
+        try{
+          await updateDoc(
+          doc(db, "EQUIPOS", doc.id),
+          {
+            Activo: !activo
+          }
+          );
+        }catch(error){
+          console.log(error);
+          alert("ERROR ACTUALIZANDO");
+        }
+        ```
       });
-
     });
+  });
 
   </script>
 
