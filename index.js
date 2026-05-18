@@ -13,7 +13,7 @@ app.get("/estado", (req, res) => {
 
 ```
 res.json({
-    activo: true
+    Activo: true
 });
 ```
 
