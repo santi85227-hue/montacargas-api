@@ -31,31 +31,44 @@ background:linear-gradient(
 #111827
 );
 
-```
+button{
+    width:100%;
+    border:none;
+    padding:14px;
+    border-radius:14px;
+    color:white;
+    font-size:15px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.btn-on{
+    background:#16a34a;
+}
+
+.btn-off{
+    background:#dc2626;
+}
+
+button:hover{
+    transform:scale(1.02);
+    opacity:0.9;
+}
+
 border-radius:24px;
-
 padding:24px;
-
 border:1px solid rgba(255,255,255,0.08);
-
 box-shadow:
     0 10px 25px rgba(0,0,0,0.35),
     inset 0 1px 0 rgba(255,255,255,0.04);
-
 transition:0.3s;
-```
-
 }
 
 .card:hover{
-
-```
-transform:translateY(-6px);
-
-box-shadow:
+    transform:translateY(-6px);
+    box-shadow:
     0 18px 35px rgba(0,0,0,0.45);
-```
-
 }
 
 .header{
@@ -71,19 +84,11 @@ color:#ffffff;
 }
 
 .estado{
-
-```
 padding:8px 16px;
-
 border-radius:30px;
-
 font-size:13px;
-
 font-weight:bold;
-
 letter-spacing:1px;
-```
-
 }
 
 .activo{
