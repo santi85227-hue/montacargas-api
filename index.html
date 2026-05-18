@@ -60,7 +60,7 @@
 
         const data = doc.data();
 
-        const activo = data.Activo === true;
+        const activo = data.activo === true;
 
         const card = document.createElement("div");
 
@@ -98,12 +98,11 @@
 
         const boton = card.querySelector("button");
         boton.addEventListener("click", async () => {
-        ```
         try{
           await updateDoc(
           doc(db, "EQUIPOS", doc.id),
           {
-            Activo: !activo
+            activo: !activo
           }
           );
         }catch(error){
