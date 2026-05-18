@@ -60,7 +60,7 @@
 
         const data = equipoDoc.data();
 
-        const activo = data.activo === true;
+        const activo = data.Activo === true;
 
         const card = document.createElement("div");
 
@@ -102,7 +102,7 @@
           await updateDoc(
           doc(db, "EQUIPOS", equipoDoc.id),
           {
-            activo: !activo
+            Activo: !activo
           }
           );
         }catch(error){
