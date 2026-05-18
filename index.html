@@ -16,7 +16,9 @@
     import {
       getFirestore,
       collection,
-      onSnapshot
+      onSnapshot,
+      doc,
+      updateDoc
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     // ================================
@@ -85,6 +87,10 @@
           <p><strong>Modelo:</strong> ${data.Modelo || "-"}</p>
 
           <p><strong>Royal:</strong> ${data.Royal || "-"}</p>
+
+          <p><button class="${ activo ? "btn-off" : "btn-on" }"> ${ activo ? "APAGAR" : "ENCENDER" } </button></p>
+
+          
 
         `;
 
