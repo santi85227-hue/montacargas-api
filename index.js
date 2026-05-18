@@ -1,43 +1,26 @@
 const express = require("express");
+const path = require("path");
 
 const app = express();
 
-app.use(express.json());
+app.use(express.static(__dirname));
 
-let equipos = {
-  "1A313102": true
-};
+app.get("/", (req, res) => {
+res.sendFile(path.join(__dirname, "index.html"));
+});
 
 app.get("/estado", (req, res) => {
 
-  const id = req.query.id;
-
-  if (!id) {
-    return res.json({
-      error: "Falta ID"
-    });
-  }
-
-  res.json({
-    activo: equipos[id] || false
-  });
+```
+res.json({
+    activo: true
 });
+```
 
-app.post("/estado", (req, res) => {
-
-  const { id, activo } = req.body;
-
-  equipos[id] = activo;
-
-  res.json({
-    ok: true,
-    equipo: id,
-    activo
-  });
 });
 
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log("Servidor iniciado");
+console.log("Servidor iniciado en puerto", PORT);
 });
