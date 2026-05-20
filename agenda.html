@@ -1,508 +1,592 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Agendamiento - Mantenimiento de Montacargas</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            min-height: 100vh;
-            color: #333;
-        }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        header { 
-            text-align: center; 
-            color: white; 
-            padding: 40px 20px;
-        }
-        header h1 { font-size: 2.5em; margin-bottom: 10px; }
-        header p { font-size: 1.2em; opacity: 0.9; }
-        
-        .card {
-            background: white;
-            border-radius: 16px;
-            padding: 30px;
-            margin: 20px 0;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        }
-        .card h2 { color: #2a5298; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-        
-        .step { display: none; }
-        .step.active { display: block; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .forklift-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-        .forklift-card {
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 20px;
-            cursor: pointer;
-            transition: all 0.3s;
-            position: relative;
-        }
-        .forklift-card:hover { border-color: #2a5298; transform: translateY(-3px); box-shadow: 0 5px 20px rgba(42,82,152,0.15); }
-        .forklift-card.selected { border-color: #2a5298; background: #f0f5ff; }
-        .forklift-card .modelo { font-weight: bold; color: #2a5298; font-size: 1.1em; }
-        .forklift-card .serie { color: #666; font-size: 0.9em; margin: 5px 0; }
-        .forklift-card .ubicacion { color: #888; font-size: 0.85em; }
-        .badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75em;
-            font-weight: bold;
-        }
-        .badge.ok { background: #d4edda; color: #155724; }
-        .badge.warning { background: #fff3cd; color: #856404; }
-        .badge.danger { background: #f8d7da; color: #721c24; }
-        
-        .calendar {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 8px;
-            margin-top: 15px;
-        }
-        .calendar-header {
-            text-align: center;
-            font-weight: bold;
-            color: #666;
-            padding: 10px;
-        }
-        .day {
-            aspect-ratio: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 2px solid transparent;
-            font-size: 0.9em;
-        }
-        .day:hover:not(.disabled):not(.selected) { background: #e8f0fe; border-color: #2a5298; }
-        .day.selected { background: #2a5298; color: white; }
-        .day.disabled { color: #ccc; cursor: not-allowed; background: #f5f5f5; }
-        .day.has-slots::after {
-            content: '';
-            width: 6px;
-            height: 6px;
-            background: #28a745;
-            border-radius: 50%;
-            margin-top: 4px;
-        }
-        .day.selected::after { background: white; }
-        
-        .time-slots {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 10px;
-            margin-top: 15px;
-        }
-        .time-slot {
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .time-slot:hover:not(.occupied) { border-color: #2a5298; background: #f0f5ff; }
-        .time-slot.selected { border-color: #2a5298; background: #2a5298; color: white; }
-        .time-slot.occupied { background: #f5f5f5; color: #999; cursor: not-allowed; text-decoration: line-through; }
-        
-        .btn {
-            padding: 14px 32px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1em;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-        }
-        .btn-primary { background: #2a5298; color: white; }
-        .btn-primary:hover { background: #1e3c72; transform: translateY(-2px); }
-        .btn-secondary { background: #6c757d; color: white; margin-left: 10px; }
-        .btn-success { background: #28a745; color: white; }
-        
-        .summary-box {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-        .summary-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e0e0e0; }
-        .summary-item:last-child { border-bottom: none; }
-        
-        .progress-bar {
-            display: flex;
-            justify-content: center;
-            margin: 30px 0;
-            gap: 5px;
-        }
-        .progress-step {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #e0e0e0;
-            color: #666;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-        .progress-step.active { background: #2a5298; color: white; }
-        .progress-step.completed { background: #28a745; color: white; }
-        .progress-line {
-            width: 60px;
-            height: 3px;
-            background: #e0e0e0;
-            align-self: center;
-        }
-        .progress-line.completed { background: #28a745; }
-        
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 16px 24px;
-            border-radius: 10px;
-            color: white;
-            font-weight: 500;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-            transform: translateX(400px);
-            transition: transform 0.4s ease;
-            z-index: 1000;
-        }
-        .notification.show { transform: translateX(0); }
-        .notification.success { background: #28a745; }
-        .notification.info { background: #17a2b8; }
-        
-        .admin-panel {
-            background: #1a1a2e;
-            color: white;
-            border-radius: 16px;
-            padding: 30px;
-            margin-top: 20px;
-        }
-        .admin-panel h2 { color: #00d4aa; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #333; }
-        th { color: #00d4aa; font-weight: 600; }
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8em;
-            font-weight: bold;
-        }
-        .status-pendiente { background: #fff3cd; color: #856404; }
-        .status-confirmado { background: #d4edda; color: #155724; }
-        .status-completado { background: #cce5ff; color: #004085; }
-        
-        @media (max-width: 768px) {
-            .forklift-grid { grid-template-columns: 1fr; }
-            .calendar { grid-template-columns: repeat(7, 1fr); gap: 4px; }
-            .day { font-size: 0.8em; }
-        }
-    </style>
-    <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Agendamiento de Mantenimiento</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial, Helvetica, sans-serif;
+    background:#f4f6f9;
+    padding:20px;
+}
+
+h1{
+    text-align:center;
+    margin-bottom:20px;
+    color:#1f2937;
+}
+
+.container{
+    max-width:1200px;
+    margin:auto;
+}
+
+.card{
+    background:white;
+    border-radius:16px;
+    padding:20px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.1);
+    margin-bottom:20px;
+}
+
+.card h2{
+    margin-bottom:15px;
+    color:#2563eb;
+}
+
+.forklift-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:15px;
+}
+
+.forklift-card{
+    border:2px solid #e5e7eb;
+    border-radius:12px;
+    padding:16px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.forklift-card:hover{
+    border-color:#2563eb;
+    transform:translateY(-2px);
+}
+
+.forklift-card.selected{
+    border-color:#2563eb;
+    background:#eff6ff;
+}
+
+.modelo{
+    font-size:18px;
+    font-weight:bold;
+    color:#111827;
+}
+
+.serie{
+    margin-top:8px;
+    color:#4b5563;
+}
+
+.ubicacion{
+    margin-top:5px;
+    color:#6b7280;
+}
+
+.calendar{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:10px;
+    margin-top:20px;
+}
+
+.day{
+    background:white;
+    border:1px solid #d1d5db;
+    border-radius:10px;
+    padding:15px;
+    text-align:center;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.day:hover{
+    background:#dbeafe;
+}
+
+.day.selected{
+    background:#2563eb;
+    color:white;
+}
+
+.time-slots{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+    gap:10px;
+    margin-top:20px;
+}
+
+.time-slot{
+    padding:12px;
+    border-radius:10px;
+    border:1px solid #d1d5db;
+    text-align:center;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.time-slot:hover{
+    background:#dbeafe;
+}
+
+.time-slot.selected{
+    background:#2563eb;
+    color:white;
+}
+
+.btn{
+    margin-top:20px;
+    padding:14px 20px;
+    border:none;
+    border-radius:10px;
+    background:#2563eb;
+    color:white;
+    cursor:pointer;
+    font-size:16px;
+    width:100%;
+}
+
+.btn:hover{
+    background:#1d4ed8;
+}
+
+.summary{
+    background:#f9fafb;
+    padding:20px;
+    border-radius:12px;
+    margin-top:20px;
+}
+
+.notification{
+    position:fixed;
+    top:20px;
+    right:20px;
+    background:#16a34a;
+    color:white;
+    padding:16px 20px;
+    border-radius:10px;
+    display:none;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🔧 Agendamiento de Mantenimiento</h1>
+
+<div class="card">
+
+<h2>1. Selecciona el equipo</h2>
+
+<div class="forklift-grid" id="forkliftList"></div>
+
+</div>
+
+<div class="card">
+
+<h2>2. Selecciona el día</h2>
+
+<div class="calendar" id="calendar"></div>
+
+</div>
+
+<div class="card">
+
+<h2>3. Selecciona la hora</h2>
+
+<div class="time-slots" id="timeSlots"></div>
+
+</div>
+
+<div class="card">
+
+<h2>4. Confirmación</h2>
+
+<div class="summary" id="summary">
+
+Seleccione información...
+
+</div>
+
+<button class="btn" onclick="confirmBooking()">
+
+CONFIRMAR MANTENIMIENTO
+
+</button>
+
+</div>
+
+</div>
+
+<div class="notification" id="notification"></div>
+
+<script type="module">
+
+/* ===================================== */
+/* FIREBASE */
+/* ===================================== */
+
+import { initializeApp }
+
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
+
   getFirestore,
   collection,
   getDocs,
-  addDoc,
-  onSnapshot
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  addDoc
+
+}
+
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* ===================================== */
+/* CONFIG */
+/* ===================================== */
 
 const firebaseConfig = {
 
-  apiKey: "TU_API_KEY",
+  apiKey: "AIzaSyCWxAs_JLDo0tX80wMe1rlHFx6hCU79DwQ",
 
-  authDomain: "TU_PROYECTO.firebaseapp.com",
+  authDomain: "montacargas-tecnicos.firebaseapp.com",
 
-  projectId: "TU_PROYECTO",
+  projectId: "montacargas-tecnicos",
 
-  storageBucket: "TU_PROYECTO.appspot.com",
+  storageBucket: "montacargas-tecnicos.firebasestorage.app",
 
-  messagingSenderId: "XXXX",
+  messagingSenderId: "321697235731",
 
-  appId: "XXXX"
+  appId: "1:321697235731:web:d54b1bf957d3a95641d0e6"
+
 };
+
+/* ===================================== */
+/* INICIALIZAR */
+/* ===================================== */
 
 const app = initializeApp(firebaseConfig);
 
 const db = getFirestore(app);
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1>🔧 Mantenimiento de Montacargas</h1>
-            <p>Agenda el mantenimiento de tu equipo de forma rápida y sencilla</p>
-        </header>
 
-        <!-- Barra de progreso -->
-        <div class="progress-bar">
-            <div class="progress-step active" id="p1">1</div>
-            <div class="progress-line" id="l1"></div>
-            <div class="progress-step" id="p2">2</div>
-            <div class="progress-line" id="l2"></div>
-            <div class="progress-step" id="p3">3</div>
-            <div class="progress-line" id="l3"></div>
-            <div class="progress-step" id="p4">4</div>
+/* ===================================== */
+/* VARIABLES */
+/* ===================================== */
+
+let montacargas = [];
+
+let selectedForklift = null;
+
+let selectedDate = null;
+
+let selectedTime = null;
+
+/* ===================================== */
+/* CARGAR EQUIPOS */
+/* ===================================== */
+
+async function cargarEquipos(){
+
+  const querySnapshot =
+    await getDocs(collection(db, "EQUIPOS"));
+
+  montacargas = [];
+
+  querySnapshot.forEach((doc) => {
+
+    montacargas.push({
+
+      id: doc.id,
+
+      ...doc.data()
+
+    });
+
+  });
+
+  renderForklifts();
+
+}
+
+cargarEquipos();
+
+/* ===================================== */
+/* MOSTRAR EQUIPOS */
+/* ===================================== */
+
+function renderForklifts(){
+
+  const container =
+    document.getElementById("forkliftList");
+
+  container.innerHTML = "";
+
+  montacargas.forEach((f) => {
+
+    container.innerHTML += `
+
+      <div
+        class="forklift-card"
+        id="equipo-${f.id}"
+      >
+
+        <div class="modelo">
+          ${f.Modelo || "-"}
         </div>
 
-        <!-- Paso 1: Seleccionar Montacargas -->
-        <div class="step active" id="step1">
-            <div class="card">
-                <h2>📋 Paso 1: Selecciona tu Montacargas</h2>
-                <p style="color: #666; margin-bottom: 10px;">Haz clic en el equipo que necesita mantenimiento:</p>
-                <div class="forklift-grid" id="forkliftList"></div>
-                <div style="text-align: right; margin-top: 20px;">
-                    <button class="btn btn-primary" onclick="nextStep(2)" id="btnStep1" disabled>Continuar →</button>
-                </div>
-            </div>
+        <div class="serie">
+          SERIAL: ${f.id}
         </div>
 
-        <!-- Paso 2: Seleccionar Fecha -->
-        <div class="step" id="step2">
-            <div class="card">
-                <h2>📅 Paso 2: Elige el Día</h2>
-                <p style="color: #666; margin-bottom: 10px;">Los días con puntos verdes tienen horarios disponibles:</p>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <button class="btn btn-secondary" onclick="changeMonth(-1)">← Mes anterior</button>
-                    <h3 id="currentMonth" style="color: #2a5298;"></h3>
-                    <button class="btn btn-secondary" onclick="changeMonth(1)">Mes siguiente →</button>
-                </div>
-                <div class="calendar" id="calendar"></div>
-                <div style="text-align: right; margin-top: 20px;">
-                    <button class="btn btn-secondary" onclick="prevStep(1)">← Atrás</button>
-                    <button class="btn btn-primary" onclick="nextStep(3)" id="btnStep2" disabled>Continuar →</button>
-                </div>
-            </div>
+        <div class="ubicacion">
+          📍 ${f.Ubicacion || "-"}
         </div>
 
-        <!-- Paso 3: Seleccionar Hora -->
-        <div class="step" id="step3">
-            <div class="card">
-                <h2>🕐 Paso 3: Elige la Hora</h2>
-                <p style="color: #666; margin-bottom: 10px;">Horarios disponibles para <strong id="selectedDateDisplay"></strong>:</p>
-                <div class="time-slots" id="timeSlots"></div>
-                <div style="text-align: right; margin-top: 20px;">
-                    <button class="btn btn-secondary" onclick="prevStep(2)">← Atrás</button>
-                    <button class="btn btn-primary" onclick="nextStep(4)" id="btnStep3" disabled>Continuar →</button>
-                </div>
-            </div>
-        </div>
+      </div>
 
-        <!-- Paso 4: Confirmación -->
-        <div class="step" id="step4">
-            <div class="card">
-                <h2>✅ Paso 4: Confirma tu Agendamiento</h2>
-                <div class="summary-box" id="summary"></div>
-                <div style="text-align: right; margin-top: 20px;">
-                    <button class="btn btn-secondary" onclick="prevStep(3)">← Atrás</button>
-                    <button class="btn btn-success" onclick="confirmBooking()">✓ Confirmar Agendamiento</button>
-                </div>
-            </div>
-        </div>
+    `;
 
-        <!-- Panel Administrativo (simulado) -->
-        <div class="admin-panel">
-            <h2>👨‍💼 Panel Administrativo</h2>
-            <p style="color: #aaa; margin-bottom: 15px;">Vista del administrador - Solicitudes recibidas</p>
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Cliente</th>
-                            <th>Equipo</th>
-                            <th>Fecha Solicitada</th>
-                            <th>Hora</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="adminTable"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+  });
 
-    <div class="notification" id="notification"></div>
+  montacargas.forEach((f) => {
 
-    <script>
-        // ========== DATOS DE EJEMPLO ==========
-        const clientes = [
-            { id: 1, nombre: "Industrias del Norte S.A.", email: "contacto@idn.com" }
-        ];
+    document
+      .getElementById(`equipo-${f.id}`)
+      .addEventListener("click", () => {
 
-        const montacargas = [
-            { id: 1, cliente_id: 1, modelo: "Toyota 8FGU25", serie: "T-2024-001", ubicacion: "Bodega A - Nave 1", estado: "ok", ultimo_mantenimiento: "2026-03-15" },
-            { id: 2, cliente_id: 1, modelo: "Hyster H50FT", serie: "H-2024-015", ubicacion: "Bodega B - Nave 3", estado: "warning", ultimo_mantenimiento: "2026-01-20" },
-            { id: 3, cliente_id: 1, modelo: "Crown C5", serie: "C-2023-008", ubicacion: "Área de Carga", estado: "danger", ultimo_mantenimiento: "2025-11-10" },
-            { id: 4, cliente_id: 1, modelo: "Mitsubishi FG25N", serie: "M-2024-022", ubicacion: "Bodega A - Nave 2", estado: "ok", ultimo_mantenimiento: "2026-04-01" }
-        ];
+        document
+          .querySelectorAll(".forklift-card")
+          .forEach((card) => {
 
-        // Horarios ocupados (simulación)
-        let occupiedSlots = {
-            "2026-05-22": ["09:00", "14:00"],
-            "2026-05-23": ["10:00"],
-            "2026-05-27": ["08:00", "16:00"]
-        };
+            card.classList.remove("selected");
 
-        let solicitudes = [
-            { id: 1001, cliente: "Industrias del Norte S.A.", equipo: "Toyota 8FGU25", fecha: "2026-05-22", hora: "09:00", estado: "confirmado" },
-            { id: 1002, cliente: "Industrias del Norte S.A.", equipo: "Hyster H50FT", fecha: "2026-05-23", hora: "10:00", estado: "pendiente" }
-        ];
+          });
 
-        // ========== ESTADO ==========
-        let currentStep = 1;
-        let selectedForklift = null;
-        let selectedDate = null;
-        let selectedTime = null;
-        let currentMonth = new Date().getMonth();
-        let currentYear = new Date().getFullYear();
+        document
+          .getElementById(`equipo-${f.id}`)
+          .classList.add("selected");
 
-        // ========== INICIALIZACIÓN ==========
-        function init() {
-            renderForklifts();
-            renderCalendar();
-            renderAdminTable();
-        }
+        selectedForklift = f;
 
-        // ========== PASO 1: MONTACARGAS ==========
-        function renderForklifts() {
-            const container = document.getElementById('forkliftList');
-            container.innerHTML = montacargas.map(f => {
-                const estadoClass = f.estado === 'ok' ? 'ok' : f.estado === 'warning' ? 'warning' : 'danger';
-                const estadoText = f.estado === 'ok' ? 'Al día' : f.estado === 'warning' ? 'Próximo' : 'Urgente';
-                return `
-                    <div class="forklift-card" onclick="selectForklift(${f.id})" id="forklift-${f.id}">
-                        <span class="badge ${estadoClass}">${estadoText}</span>
-                        <div class="modelo">${f.modelo}</div>
-                        <div class="serie">Serie: ${f.serie}</div>
-                        <div class="ubicacion">📍 ${f.ubicacion}</div>
-                        <div style="margin-top: 10px; font-size: 0.85em; color: #888;">
-                            Último mantenimiento: ${f.ultimo_mantenimiento}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
+        actualizarResumen();
 
-        function selectForklift(id) {
-            document.querySelectorAll('.forklift-card').forEach(c => c.classList.remove('selected'));
-            document.getElementById(`forklift-${id}`).classList.add('selected');
-            selectedForklift = montacargas.find(f => f.id === id);
-            document.getElementById('btnStep1').disabled = false;
-        }
+      });
 
-        // ========== PASO 2: CALENDARIO ==========
-        function renderCalendar() {
-            const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-            document.getElementById('currentMonth').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+  });
 
-            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+}
 
-            const calendar = document.getElementById('calendar');
-            const daysOfWeek = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-            
-            let html = daysOfWeek.map(d => `<div class="calendar-header">${d}</div>`).join('');
-            
-            // Espacios vacíos antes del primer día
-            for (let i = 0; i < firstDay; i++) {
-                html += '<div></div>';
-            }
+/* ===================================== */
+/* CALENDARIO */
+/* ===================================== */
 
-            for (let day = 1; day <= daysInMonth; day++) {
-                const date = new Date(currentYear, currentMonth, day);
-                const dateStr = formatDate(date);
-                const isPast = date < today;
-                const isSunday = date.getDay() === 0;
-                const isDisabled = isPast || isSunday;
-                const hasSlots = !isDisabled && Math.random() > 0.3; // Simulación
-                const isSelected = selectedDate === dateStr;
-                
-                let classes = 'day';
-                if (isDisabled) classes += ' disabled';
-                if (hasSlots) classes += ' has-slots';
-                if (isSelected) classes += ' selected';
+const calendar =
+  document.getElementById("calendar");
 
-                html += `<div class="${classes}" onclick="${isDisabled ? '' : `selectDate('${dateStr}')`}">${day}</div>`;
-            }
+for(let i=1; i<=30; i++){
 
-            calendar.innerHTML = html;
-        }
+  const day =
+    document.createElement("div");
 
-        function selectDate(dateStr) {
-            selectedDate = dateStr;
-            selectedTime = null;
-            renderCalendar();
-            document.getElementById('btnStep2').disabled = false;
-        }
+  day.className = "day";
 
-        function changeMonth(delta) {
-            currentMonth += delta;
-            if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-            if (currentMonth < 0) { currentMonth = 11; currentYear--; }
-            renderCalendar();
-        }
+  day.innerText = i;
 
-        // ========== PASO 3: HORARIOS ==========
-        function renderTimeSlots() {
-            document.getElementById('selectedDateDisplay').textContent = formatDateDisplay(selectedDate);
-            
-            const slots = ["08:00", "09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00"];
-            const occupied = occupiedSlots[selectedDate] || [];
-            
-            const container = document.getElementById('timeSlots');
-            container.innerHTML = slots.map(time => {
-                const isOccupied = occupied.includes(time);
-                const isSelected = selectedTime === time;
-                let classes = 'time-slot';
-                if (isOccupied) classes += ' occupied';
-                if (isSelected) classes += ' selected';
-                
-                return `<div class="${classes}" onclick="${isOccupied ? '' : `selectTime('${time}')`}">${time}</div>`;
-            }).join('');
-        }
+  day.addEventListener("click", () => {
 
-        function selectTime(time) {
-            selectedTime = time;
-            renderTimeSlots();
-            document.getElementById('btnStep3').disabled = false;
-        }
+    document
+      .querySelectorAll(".day")
+      .forEach((d) => {
 
-        // ========== PASO 4: RESUMEN ==========
-        function renderSummary() {
-            const forklift = selectedForklift;
-            const summary = document.getElementById('summary');
-            summary.innerHTML = `
-                <div class="summary-item">
-                    <span>👤 Cliente:</span>
-                    <strong>${clientes[0].nombre}</strong>
-                </div>
-                <div class="summary-item">
-                    <span>🔧 Equipo:</span>
-                    <strong>${forklift.modelo} (Serie: ${forklift.serie})</strong>
-                </div>
-                <div class
+        d.classList.remove("selected");
+
+      });
+
+    day.classList.add("selected");
+
+    selectedDate =
+      `2026-05-${String(i).padStart(2,'0')}`;
+
+    actualizarResumen();
+
+  });
+
+  calendar.appendChild(day);
+
+}
+
+/* ===================================== */
+/* HORARIOS */
+/* ===================================== */
+
+const horas = [
+
+  "08:00",
+  "09:00",
+  "10:00",
+  "11:00",
+  "14:00",
+  "15:00",
+  "16:00"
+
+];
+
+const timeSlots =
+  document.getElementById("timeSlots");
+
+horas.forEach((hora) => {
+
+  const div =
+    document.createElement("div");
+
+  div.className = "time-slot";
+
+  div.innerText = hora;
+
+  div.addEventListener("click", () => {
+
+    document
+      .querySelectorAll(".time-slot")
+      .forEach((t) => {
+
+        t.classList.remove("selected");
+
+      });
+
+    div.classList.add("selected");
+
+    selectedTime = hora;
+
+    actualizarResumen();
+
+  });
+
+  timeSlots.appendChild(div);
+
+});
+
+/* ===================================== */
+/* RESUMEN */
+/* ===================================== */
+
+function actualizarResumen(){
+
+  const summary =
+    document.getElementById("summary");
+
+  summary.innerHTML = `
+
+    <p>
+      <strong>Equipo:</strong>
+      ${selectedForklift?.Modelo || "-"}
+    </p>
+
+    <p>
+      <strong>Serial:</strong>
+      ${selectedForklift?.id || "-"}
+    </p>
+
+    <p>
+      <strong>Fecha:</strong>
+      ${selectedDate || "-"}
+    </p>
+
+    <p>
+      <strong>Hora:</strong>
+      ${selectedTime || "-"}
+    </p>
+
+  `;
+
+}
+
+/* ===================================== */
+/* GUARDAR AGENDAMIENTO */
+/* ===================================== */
+
+window.confirmBooking =
+async function(){
+
+  if(
+    !selectedForklift ||
+    !selectedDate ||
+    !selectedTime
+  ){
+
+    alert("Complete toda la información");
+
+    return;
+
+  }
+
+  try{
+
+    await addDoc(
+
+      collection(db, "AGENDAMIENTOS"),
+
+      {
+
+        equipo: selectedForklift.id,
+
+        modelo: selectedForklift.Modelo || "",
+
+        fecha: selectedDate,
+
+        hora: selectedTime,
+
+        estado: "PENDIENTE",
+
+        fechaCreacion:
+          new Date().toISOString()
+
+      }
+
+    );
+
+    mostrarNotificacion(
+      "Mantenimiento agendado correctamente"
+    );
+
+  }catch(error){
+
+    console.log(error);
+
+    alert("ERROR GUARDANDO");
+
+  }
+
+}
+
+/* ===================================== */
+/* NOTIFICACION */
+/* ===================================== */
+
+function mostrarNotificacion(texto){
+
+  const n =
+    document.getElementById("notification");
+
+  n.innerText = texto;
+
+  n.style.display = "block";
+
+  setTimeout(() => {
+
+    n.style.display = "none";
+
+  }, 3000);
+
+}
+
+</script>
+
+</body>
+</html>
