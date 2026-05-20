@@ -521,7 +521,7 @@ async function cargarHorariosOcupados(){
     });
 
   const snapshot =
-    await getDocs(collection(db, "AGENDAMIENTOS"));
+    await getDocs(collection(db, "AGENDAMIENTO"));
 
   snapshot.forEach((docu) => {
 
@@ -566,7 +566,7 @@ async function(){
 
     await addDoc(
 
-      collection(db, "AGENDAMIENTOS"),
+      collection(db, "AGENDAMIENTO"),
 
       {
 
@@ -629,7 +629,7 @@ function mostrarNotificacion(texto){
 /* ===================================== */
 
 onSnapshot(
-  collection(db, "AGENDAMIENTOS"),
+  collection(db, "AGENDAMIENTO"),
   () => {
 
     if(selectedDate){
