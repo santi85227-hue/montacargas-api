@@ -137,6 +137,13 @@ h1{
     color:white;
 }
 
+.time-slot.ocupado{
+    background:#d1d5db;
+    color:#6b7280;
+    cursor:not-allowed;
+    opacity:0.5;
+}
+
 .btn{
     margin-top:20px;
     padding:14px 20px;
@@ -215,9 +222,12 @@ Seleccione información...
 
 </div>
 
-<button class="btn-confirmar" onclick="confirmarMantenimiento()">
-  CONFIRMAR MANTENIMIENTO
+<button class="btn" onclick="confirmarMantenimiento()">
+
+CONFIRMAR MANTENIMIENTO
+
 </button>
+
 </div>
 
 </div>
@@ -225,10 +235,6 @@ Seleccione información...
 <div class="notification" id="notification"></div>
 
 <script type="module">
-
-/* ===================================== */
-/* FIREBASE */
-/* ===================================== */
 
 import { initializeApp }
 
@@ -239,14 +245,15 @@ import {
   getFirestore,
   collection,
   getDocs,
-  addDoc
+  addDoc,
+  onSnapshot
 
 }
 
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /* ===================================== */
-/* CONFIG */
+/* FIREBASE */
 /* ===================================== */
 
 const firebaseConfig = {
@@ -264,10 +271,6 @@ const firebaseConfig = {
   appId: "1:321697235731:web:d54b1bf957d3a95641d0e6"
 
 };
-
-/* ===================================== */
-/* INICIALIZAR */
-/* ===================================== */
 
 const app = initializeApp(firebaseConfig);
 
@@ -296,20 +299,19 @@ async function cargarEquipos(){
 
   montacargas = [];
 
-  querySnapshot.forEach((doc) => {
+  querySnapshot.forEach((docu) => {
 
     montacargas.push({
 
-      id: doc.id,
+      id: docu.id,
 
-      ...doc.data()
+      ...docu.data()
 
     });
 
   });
 
   renderForklifts();
-
 }
 
 cargarEquipos();
@@ -349,7 +351,6 @@ function renderForklifts(){
       </div>
 
     `;
-
   });
 
   montacargas.forEach((f) => {
@@ -373,11 +374,8 @@ function renderForklifts(){
         selectedForklift = f;
 
         actualizarResumen();
-
       });
-
   });
-
 }
 
 /* ===================================== */
@@ -396,7 +394,7 @@ for(let i=1; i<=30; i++){
 
   day.innerText = i;
 
-  day.addEventListener("click", () => {
+  day.addEventListener("click", async () => {
 
     document
       .querySelectorAll(".day")
@@ -413,10 +411,10 @@ for(let i=1; i<=30; i++){
 
     actualizarResumen();
 
+    await cargarHorariosOcupados();
   });
 
   calendar.appendChild(day);
-
 }
 
 /* ===================================== */
@@ -445,9 +443,15 @@ horas.forEach((hora) => {
 
   div.className = "time-slot";
 
+  div.dataset.hora = hora;
+
   div.innerText = hora;
 
   div.addEventListener("click", () => {
+
+    if(div.classList.contains("ocupado")){
+      return;
+    }
 
     document
       .querySelectorAll(".time-slot")
@@ -462,11 +466,9 @@ horas.forEach((hora) => {
     selectedTime = hora;
 
     actualizarResumen();
-
   });
 
   timeSlots.appendChild(div);
-
 });
 
 /* ===================================== */
@@ -501,14 +503,52 @@ function actualizarResumen(){
     </p>
 
   `;
+}
 
+/* ===================================== */
+/* HORARIOS OCUPADOS */
+/* ===================================== */
+
+async function cargarHorariosOcupados(){
+
+  document
+    .querySelectorAll(".time-slot")
+    .forEach((btn) => {
+
+      btn.classList.remove("ocupado");
+
+      btn.style.pointerEvents = "auto";
+    });
+
+  const snapshot =
+    await getDocs(collection(db, "AGENDAMIENTOS"));
+
+  snapshot.forEach((docu) => {
+
+    const data = docu.data();
+
+    if(data.fecha === selectedDate){
+
+      document
+        .querySelectorAll(".time-slot")
+        .forEach((btn) => {
+
+          if(btn.dataset.hora === data.hora){
+
+            btn.classList.add("ocupado");
+
+            btn.style.pointerEvents = "none";
+          }
+        });
+    }
+  });
 }
 
 /* ===================================== */
 /* GUARDAR AGENDAMIENTO */
 /* ===================================== */
 
-window.confirmBooking =
+window.confirmarMantenimiento =
 async function(){
 
   if(
@@ -520,7 +560,6 @@ async function(){
     alert("Complete toda la información");
 
     return;
-
   }
 
   try{
@@ -545,21 +584,24 @@ async function(){
           new Date().toISOString()
 
       }
-
     );
 
     mostrarNotificacion(
       "Mantenimiento agendado correctamente"
     );
 
+    selectedTime = null;
+
+    actualizarResumen();
+
+    cargarHorariosOcupados();
+
   }catch(error){
 
     console.log(error);
 
     alert("ERROR GUARDANDO");
-
   }
-
 }
 
 /* ===================================== */
@@ -580,168 +622,20 @@ function mostrarNotificacion(texto){
     n.style.display = "none";
 
   }, 3000);
-
 }
 
-</script>
-    <script type="module">
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  addDoc,
-  onSnapshot
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-const firebaseConfig = {
-
-  apiKey: "TU_APIKEY",
-
-  authDomain: "montacargas-tecnicos.firebaseapp.com",
-
-  projectId: "montacargas-tecnicos",
-
-  storageBucket: "montacargas-tecnicos.appspot.com",
-
-  messagingSenderId: "321697235731",
-
-  appId: "1:321697235731:web:d54b1bf957d3a95641d0e6"
-};
-
-const app = initializeApp(firebaseConfig);
-
-const db = getFirestore(app);
-
-let equipoSeleccionado = null;
-let fechaSeleccionada = null;
-let horaSeleccionada = null;
-
-window.seleccionarEquipo = function(serial){
-
-  equipoSeleccionado = serial;
-
-  actualizarResumen();
-}
-
-window.seleccionarFecha = function(fecha){
-
-  fechaSeleccionada = fecha;
-
-  actualizarResumen();
-
-  cargarHorariosOcupados();
-}
-
-window.seleccionarHora = function(hora){
-
-  horaSeleccionada = hora;
-
-  actualizarResumen();
-}
-
-function actualizarResumen(){
-
-  document.getElementById("resumen").innerHTML = `
-
-    <b>Equipo:</b> ${equipoSeleccionado || "-"}<br>
-    <b>Fecha:</b> ${fechaSeleccionada || "-"}<br>
-    <b>Hora:</b> ${horaSeleccionada || "-"}
-
-  `;
-}
-
-async function cargarHorariosOcupados(){
-
-  const snapshot = await getDocs(
-    collection(db, "AGENDAMIENTOS")
-  );
-
-  document.querySelectorAll(".hora-btn")
-  .forEach(btn => {
-
-    btn.disabled = false;
-
-    btn.classList.remove("ocupado");
-  });
-
-  snapshot.forEach(docu => {
-
-    const data = docu.data();
-
-    if(data.fecha === fechaSeleccionada){
-
-      document.querySelectorAll(".hora-btn")
-      .forEach(btn => {
-
-        if(btn.dataset.hora === data.hora){
-
-          btn.disabled = true;
-
-          btn.classList.add("ocupado");
-        }
-      });
-    }
-  });
-}
-
-window.confirmarMantenimiento = async function(){
-
-  if(
-    !equipoSeleccionado ||
-    !fechaSeleccionada ||
-    !horaSeleccionada
-  ){
-
-    alert("Debes completar todos los campos");
-
-    return;
-  }
-
-  try{
-
-    await addDoc(
-      collection(db, "AGENDAMIENTOS"),
-      {
-
-        equipo: equipoSeleccionado,
-
-        fecha: fechaSeleccionada,
-
-        hora: horaSeleccionada,
-
-        estado: "PENDIENTE",
-
-        fechaCreacion: new Date()
-      }
-    );
-
-    alert("Mantenimiento agendado correctamente");
-
-    equipoSeleccionado = null;
-    fechaSeleccionada = null;
-    horaSeleccionada = null;
-
-    actualizarResumen();
-
-    cargarHorariosOcupados();
-
-  }catch(error){
-
-    console.log(error);
-
-    alert("Error guardando mantenimiento");
-  }
-}
+/* ===================================== */
+/* ACTUALIZACION AUTOMATICA */
+/* ===================================== */
 
 onSnapshot(
   collection(db, "AGENDAMIENTOS"),
   () => {
 
-    cargarHorariosOcupados();
+    if(selectedDate){
+
+      cargarHorariosOcupados();
+    }
   }
 );
 
@@ -749,4 +643,3 @@ onSnapshot(
 
 </body>
 </html>
-
