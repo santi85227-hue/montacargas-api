@@ -320,14 +320,55 @@ cargarEquipos();
 /* MOSTRAR EQUIPOS */
 /* ===================================== */
 
-function renderForklifts(){
+async function renderForklifts(){
 
   const container =
     document.getElementById("forkliftList");
 
   container.innerHTML = "";
 
+  // CONSULTAR AGENDAMIENTOS
+  const agSnapshot =
+    await getDocs(collection(db, "AGENDAMIENTO"));
+
+  const agendamientos = [];
+
+  agSnapshot.forEach((docu) => {
+
+    agendamientos.push(docu.data());
+
+  });
+
   montacargas.forEach((f) => {
+
+    // BUSCAR AGENDAMIENTO POR SERIE
+    const agenda =
+      agendamientos.find(a => a.serie === f.id);
+
+    let fechaAgenda = "-";
+    let horaAgenda = "-";
+    let estadoAgenda = "-";
+
+    if(agenda){
+
+      if(agenda.fecha?.seconds){
+
+        const fecha =
+          new Date(
+            agenda.fecha.seconds * 1000
+          );
+
+        fechaAgenda =
+          fecha.toLocaleDateString();
+
+      }
+
+      horaAgenda =
+        agenda.hora || "-";
+
+      estadoAgenda =
+        agenda.estado || "-";
+    }
 
     container.innerHTML += `
 
@@ -346,6 +387,27 @@ function renderForklifts(){
 
         <div class="ubicacion">
           📍 ${f.Ubicacion || "-"}
+        </div>
+
+        <hr style="margin:12px 0">
+
+        <div style="font-size:14px">
+
+          <p>
+            <strong>Fecha agenda:</strong>
+            ${fechaAgenda}
+          </p>
+
+          <p>
+            <strong>Hora:</strong>
+            ${horaAgenda}
+          </p>
+
+          <p>
+            <strong>Estado:</strong>
+            ${estadoAgenda}
+          </p>
+
         </div>
 
       </div>
@@ -377,7 +439,6 @@ function renderForklifts(){
       });
   });
 }
-
 /* ===================================== */
 /* CALENDARIO */
 /* ===================================== */
@@ -565,24 +626,15 @@ async function(){
   try{
 
     await addDoc(
-
       collection(db, "AGENDAMIENTO"),
-
       {
-
-        equipo: selectedForklift.id,
-
+        serie: selectedForklift.id,
         modelo: selectedForklift.Modelo || "",
-
-        fecha: selectedDate,
-
+        fecha: new Date(selectedDate + "T00:00:00"),
         hora: selectedTime,
-
         estado: "PENDIENTE",
-
         fechaCreacion:
           new Date().toISOString()
-
       }
     );
 
