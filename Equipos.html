@@ -115,3 +115,105 @@
 
   </script>
 
+  <style>
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:Arial;
+    }
+
+    body{
+      background:#0f172a;
+      color:white;
+      padding:20px;
+    }
+
+    h1{
+      margin-bottom:20px;
+      text-align:center;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+      gap:16px;
+    }
+
+    .card{
+      background:#1e293b;
+      border-radius:16px;
+      padding:20px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.3);
+      border:1px solid #334155;
+    }
+
+    .header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:12px;
+    }
+
+    .activo{
+      background:#16a34a;
+      color:white;
+      padding:6px 12px;
+      border-radius:30px;
+      font-size:12px;
+      font-weight:bold;
+    }
+
+    .inactivo{
+      background:#dc2626;
+      color:white;
+      padding:6px 12px;
+      border-radius:30px;
+      font-size:12px;
+      font-weight:bold;
+    }
+
+    p{
+      margin-top:8px;
+      color:#cbd5e1;
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <h1>MONITOREO MONTACARGAS</h1>
+
+  <div class="grid" id="equipos"></div>
+
+</body>
+</html>
+
+
+_____________
+
+index.js
+const express = require("express");
+const path = require("path");
+
+const app = express();
+
+app.use(express.static(__dirname));
+
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "index.html"));
+});
+
+app.get("/estado", (req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.send('{"Activo"}');
+});
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+    console.log("Servidor iniciado en puerto", PORT);
+});
