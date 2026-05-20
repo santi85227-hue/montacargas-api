@@ -180,3 +180,41 @@ background:#22c55e;
 box-shadow:0 0 12px #22c55e;
 
 }
+.btn-confirmar{
+
+  width:100%;
+
+  padding:18px;
+
+  border:none;
+
+  border-radius:14px;
+
+  background:#2563eb;
+
+  color:white;
+
+  font-size:18px;
+
+  font-weight:bold;
+
+  cursor:pointer;
+
+  transition:0.3s;
+}
+
+.btn-confirmar:hover{
+
+  background:#1d4ed8;
+
+  transform:scale(1.01);
+}
+
+.hora-btn.ocupado{
+
+  background:#ef4444;
+
+  color:white;
+
+  cursor:not-allowed;
+}
