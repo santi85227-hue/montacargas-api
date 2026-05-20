@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Órdenes de Trabajo</title>
+
+<style>
+
+body{
+    margin:0;
+    padding:20px;
+    font-family:Arial;
+    background:#f4f6f9;
+}
+
+h1{
+    text-align:center;
+    color:#333;
+    margin-bottom:20px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:20px;
+}
+
+.card{
+    background:white;
+    border-radius:18px;
+    padding:18px;
+    box-shadow:0 4px 14px rgba(0,0,0,0.1);
+    transition:0.2s;
+}
+
+.card:hover{
+    transform:translateY(-4px);
+}
+
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:12px;
+}
+
+.estado{
+    padding:6px 12px;
+    border-radius:12px;
+    font-size:12px;
+    font-weight:bold;
+    color:white;
+}
+
+.en_camino{
+    background:#2196F3;
+}
+
+.llegado{
+    background:#FF9800;
+}
+
+.reparacion{
+    background:#9C27B0;
+}
+
+.finalizado{
+    background:#4CAF50;
+}
+
+.pendiente{
+    background:#757575;
+}
+
+.prioridad{
+    margin-top:10px;
+    font-weight:bold;
+}
+
+.alta{
+    color:red;
+}
+
+.media{
+    color:orange;
+}
+
+.baja{
+    color:green;
+}
+
+p{
+    margin:6px 0;
+    color:#444;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>Órdenes de Trabajo</h1>
+
+<div class="grid" id="ordenes"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+    getFirestore,
+    collection,
+    onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+
+    apiKey: "AIzaSyCWxAs_JLDo0tX80wMe1rlHFx6hCU79DwQ",
+
+    authDomain: "montacargas-tecnicos.firebaseapp.com",
+
+    projectId: "montacargas-tecnicos",
+
+    storageBucket: "montacargas-tecnicos.firebasestorage.app",
+
+    messagingSenderId: "321697235731",
+
+    appId: "1:321697235731:web:d54b1bf957d3a95641d0e6"
+};
+
+const app = initializeApp(firebaseConfig);
+
+const db = getFirestore(app);
+
+const container = document.getElementById("ordenes");
+
+onSnapshot(collection(db, "ordenes"), (snapshot) => {
+
+    container.innerHTML = "";
+
+    snapshot.forEach((docu) => {
+
+        const data = docu.data();
+
+        let estadoClase = "pendiente";
+
+        if(data.estado === "EN_CAMINO"){
+            estadoClase = "en_camino";
+        }
+        else if(data.estado === "LLEGADO"){
+            estadoClase = "llegado";
+        }
+        else if(data.estado === "EN_REPARACION"){
+            estadoClase = "reparacion";
+        }
+        else if(data.estado === "FINALIZADO"){
+            estadoClase = "finalizado";
+        }
+
+        let prioridadClase = "baja";
+
+        if(data.prioridad >= 8){
+            prioridadClase = "alta";
+        }
+        else if(data.prioridad >= 5){
+            prioridadClase = "media";
+        }
+
+        const card = document.createElement("div");
+
+        card.className = "card";
+
+        card.innerHTML = `
+
+            <div class="header">
+
+                <h2>OS #${data.id || "-"}</h2>
+
+                <span class="estado ${estadoClase}">
+                    ${data.estado || "PENDIENTE"}
+                </span>
+
+            </div>
+
+            <p><strong>Equipo:</strong> ${data.serial || "-"}</p>
+
+            <p><strong>Cliente:</strong> ${data.clienteNombre || "-"}</p>
+
+            <p><strong>Técnico:</strong> ${data.tecnico || "-"}</p>
+
+            <p><strong>Diagnóstico:</strong> ${data.diagnostico || "-"}</p>
+
+            <p><strong>Fecha:</strong> ${data.fechaCreacion || "-"}</p>
+
+            <p class="prioridad ${prioridadClase}">
+                Prioridad: ${data.prioridad || 0}
+            </p>
+
+        `;
+
+        container.appendChild(card);
+
+    });
+
+});
+
+</script>
+
+</body>
+
+</html>
