@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Montacargas RF</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <script type="module">
+
+    // ================================
+    // FIREBASE SDK
+    // ================================
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+    import {
+      getFirestore,
+      collection,
+      onSnapshot,
+      doc,
+      updateDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // ================================
+    // CONFIG FIREBASE
+    // ================================
+    const firebaseConfig = {
+
+      apiKey: "AIzaSyCWxAs_JLDo0tX80wMe1rlHFx6hCU79DwQ",
+
+      authDomain: "montacargas-tecnicos.firebaseapp.com",
+
+      projectId: "montacargas-tecnicos",
+
+      storageBucket: "montacargas-tecnicos.firebasestorage.app",
+
+      messagingSenderId: "321697235731",
+
+      appId: "1:321697235731:web:d54b1bf957d3a95641d0e6"
+
+    };
+
+    // ================================
+    // INICIALIZAR FIREBASE
+    // ================================
+    const app = initializeApp(firebaseConfig);
+
+    const db = getFirestore(app);
+
+    // ================================
+    // CARGAR EQUIPOS
+    // ================================
+    const container = document.getElementById("equipos");
+
+    onSnapshot(collection(db, "EQUIPOS"), (snapshot) => {
+
+      container.innerHTML = "";
+
+      snapshot.forEach((equipoDoc) => {
+
+        const data = equipoDoc.data();
+
+        const activo = data.Activo === true;
+
+        const card = document.createElement("div");
+
+        card.className = "card";
+
+        card.innerHTML = `
+
+          <div class="header">
+
+            <h2>${equipoDoc.id}</h2>
+
+            <span class="${
+              activo ? "activo" : "inactivo"
+            }">
+
+              ${
+                activo ? "ACTIVO" : "INACTIVO"
+              }
+
+            </span>
+
+          </div>
+
+          <p><strong>Modelo:</strong> ${data.Modelo || "-"}</p>
+
+          <p><strong>Royal:</strong> ${data.Royal || "-"}</p>
+
+          <p><button class="${ activo ? "btn-off" : "btn-on" }"> ${ activo ? "APAGAR" : "ENCENDER" } </button></p>
+
+          
+
+        `;
+
+        container.appendChild(card);
+
+        const boton = card.querySelector("button");
+        boton.addEventListener("click", async () => {
+        try{
+          await updateDoc(
+          doc(db, "EQUIPOS", equipoDoc.id),
+          {
+            Activo: !activo
+          }
+          );
+        }catch(error){
+          console.log(error);
+          alert("ERROR ACTUALIZANDO");
+        }
+      });
+    });
+  });
+
+  </script>
+
