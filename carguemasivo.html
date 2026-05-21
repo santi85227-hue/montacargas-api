@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Cargue Masivo Equipos</title>
+
+<style>
+
+body{
+    font-family:Arial;
+    background:#f4f6f9;
+    padding:30px;
+}
+
+.card{
+    background:white;
+    padding:30px;
+    border-radius:16px;
+    max-width:700px;
+    margin:auto;
+    box-shadow:0 4px 15px rgba(0,0,0,0.1);
+}
+
+h1{
+    margin-bottom:20px;
+}
+
+input{
+    margin:20px 0;
+}
+
+button{
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:10px;
+    background:#2563eb;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#1d4ed8;
+}
+
+#resultado{
+    margin-top:20px;
+    padding:15px;
+    background:#ecfdf5;
+    border-radius:10px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+<h1>📥 Cargue Masivo de Equipos</h1>
+
+<input type="file" id="excelFile" accept=".xlsx,.xls">
+
+<button onclick="cargarExcel()">
+
+SUBIR EQUIPOS
+
+</button>
+
+<div id="resultado"></div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<script type="module">
+
+/* ==================================== */
+/* FIREBASE */
+/* ==================================== */
+
+import { initializeApp }
+
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+
+  getFirestore,
+  collection,
+  addDoc
+
+}
+
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* ==================================== */
+/* CONFIG */
+/* ==================================== */
+
+const firebaseConfig = {
+
+  apiKey: "AIzaSyCWxAs_JLDo0tX80wMe1rlHFx6hCU79DwQ",
+
+  authDomain: "montacargas-tecnicos.firebaseapp.com",
+
+  projectId: "montacargas-tecnicos",
+
+  storageBucket: "montacargas-tecnicos.firebasestorage.app",
+
+  messagingSenderId: "321697235731",
+
+  appId: "1:321697235731:web:d54b1bf957d3a95641d0e6"
+
+};
+
+const app = initializeApp(firebaseConfig);
+
+const db = getFirestore(app);
+
+/* ==================================== */
+/* CARGAR EXCEL */
+/* ==================================== */
+
+window.cargarExcel = async function(){
+
+  const file =
+    document.getElementById("excelFile").files[0];
+
+  if(!file){
+
+    alert("Seleccione un archivo");
+
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = async function(e){
+
+    const data = new Uint8Array(e.target.result);
+
+    const workbook =
+      XLSX.read(data, { type: "array" });
+
+    const sheet =
+      workbook.Sheets[
+        workbook.SheetNames[0]
+      ];
+
+    const json =
+      XLSX.utils.sheet_to_json(sheet);
+
+    let total = 0;
+
+    for(const row of json){
+
+      try{
+
+        await addDoc(
+
+          collection(db, "Equipos"),
+
+          {
+
+            Serie:
+              row.Serie || "",
+
+            Modelo:
+              row.Modelo || "",
+
+            Royal:
+              row.Royal || "",
+
+            Estado:
+              row.Estado || "OPERATIVO",
+
+            Activo:
+              String(row.Activo).toUpperCase() === "TRUE",
+
+            Horometro1:
+              Number(row.Horometro1 || 0),
+
+            Horometro2:
+              Number(row.Horometro2 || 0),
+
+            Horometro3:
+              Number(row.Horometro3 || 0),
+
+            Horometro4:
+              Number(row.Horometro4 || 0)
+
+          }
+
+        );
+
+        total++;
+
+      }catch(error){
+
+        console.log(error);
+
+      }
+
+    }
+
+    document.getElementById("resultado")
+    .innerHTML = `
+
+      ✅ Equipos cargados:
+      <strong>${total}</strong>
+
+    `;
+
+  };
+
+  reader.readAsArrayBuffer(file);
+
+}
+
+</script>
+
+</body>
+</html>
