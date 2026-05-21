@@ -666,9 +666,35 @@ function renderCalendario(){
 
     day.id = `dia-${dia}`;
 
-    if(agendasDia.length > 0){
-      day.classList.add("ocupado");
-    }
+    // DIA DE LA SEMANA
+const fechaDia =
+  new Date(year, month, dia);
+
+const diaSemana =
+  fechaDia.getDay();
+
+// 0 = DOMINGO
+// 6 = SABADO
+
+if(diaSemana === 0 || diaSemana === 6){
+
+  // SABADOS Y DOMINGOS
+  day.style.background = "#fee2e2";
+  day.style.border = "2px solid #dc2626";
+  day.style.color = "#991b1b";
+
+}else if(agendasDia.length > 0){
+
+  // DIAS CON PROGRAMACION
+  day.style.background = "#dcfce7";
+  day.style.border = "2px solid #16a34a";
+
+}else{
+
+  // DIAS DISPONIBLES
+  day.style.background = "#dbeafe";
+  day.style.border = "2px solid #2563eb";
+}
 
     day.innerHTML = `
       <div class="day-numero">
@@ -682,24 +708,42 @@ function renderCalendario(){
 
     day.addEventListener("click", () => {
 
-      document
-        .querySelectorAll(".day")
-        .forEach((d) => {
-          d.classList.remove("selected");
-        });
+  // NO PERMITIR SABADOS NI DOMINGOS
+  if(diaSemana === 0 || diaSemana === 6){
 
-      day.classList.add("selected");
+    mostrarNotificacion(
+      "No se programan mantenimientos sábados o domingos"
+    );
 
-      selectedDate = fechaTexto;
+    return;
+  }
 
-      selectedTime = null;
+  document
+    .querySelectorAll(".day")
+    .forEach((d) => {
 
-      document
-        .querySelectorAll(".time-slot")
-        .forEach((t) => {
-          t.classList.remove("selected");
-        });
+      d.classList.remove("selected");
+    });
 
+  day.classList.add("selected");
+
+  selectedDate = fechaTexto;
+
+  selectedTime = null;
+
+  document
+    .querySelectorAll(".time-slot")
+    .forEach((t) => {
+
+      t.classList.remove("selected");
+    });
+
+  actualizarResumen();
+
+  mostrarAgendaDelDia(fechaTexto);
+
+  cargarHorariosOcupados();
+});
       actualizarResumen();
 
       mostrarAgendaDelDia(fechaTexto);
