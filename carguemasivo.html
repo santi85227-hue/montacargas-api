@@ -235,6 +235,435 @@ window.cargarExcel = async function(){
 
 }
 
+    /* ===================================== */
+/* CALENDARIO REAL */
+/* LUNES A DOMINGO */
+/* ===================================== */
+
+function renderCalendario(){
+
+  const calendar =
+    document.getElementById("calendar");
+
+  calendar.innerHTML = "";
+
+  // AÑO Y MES
+  const year = 2026;
+  const month = 4; // MAYO = 4
+
+  // PRIMER DIA DEL MES
+  const primerDia =
+    new Date(year, month, 1);
+
+  // ULTIMO DIA
+  const ultimoDia =
+    new Date(year, month + 1, 0);
+
+  const totalDias =
+    ultimoDia.getDate();
+
+  // AJUSTAR PARA QUE LUNES SEA EL PRIMERO
+  let inicioSemana =
+    primerDia.getDay();
+
+  if(inicioSemana === 0){
+    inicioSemana = 7;
+  }
+
+  // TITULOS
+  const diasSemana = [
+    "LUN",
+    "MAR",
+    "MIE",
+    "JUE",
+    "VIE",
+    "SAB",
+    "DOM"
+  ];
+
+  diasSemana.forEach((dia) => {
+
+    const header =
+      document.createElement("div");
+
+    header.style.fontWeight = "bold";
+    header.style.textAlign = "center";
+    header.style.padding = "10px";
+    header.style.color = "#2563eb";
+
+    header.innerText = dia;
+
+    calendar.appendChild(header);
+
+  });
+
+  // ESPACIOS VACIOS
+  for(let i=1; i<inicioSemana; i++){
+
+    const empty =
+      document.createElement("div");
+
+    calendar.appendChild(empty);
+
+  }
+
+  // DIAS DEL MES
+  for(let i=1; i<=totalDias; i++){
+
+    const fechaTexto =
+      `2026-05-${String(i).padStart(2,'0')}`;
+
+    const agendasDia =
+      agendamientos.filter((a) => {
+
+        if(!a.fecha?.seconds) return false;
+
+        const fecha =
+          new Date(a.fecha.seconds * 1000);
+
+        const fechaAgenda =
+          fecha.toISOString().split("T")[0];
+
+        return fechaAgenda === fechaTexto;
+
+      });
+
+    const day =
+      document.createElement("div");
+
+    day.className = "day";
+
+    if(agendasDia.length > 0){
+
+      day.classList.add("ocupado");
+
+    }
+
+    day.innerHTML = `
+
+      <div class="day-numero">
+        ${i}
+      </div>
+
+      <div class="day-agenda">
+        ${agendasDia.length} agenda(s)
+      </div>
+
+    `;
+
+    day.addEventListener("click", () => {
+
+      document
+        .querySelectorAll(".day")
+        .forEach((d) => {
+
+          d.classList.remove("selected");
+
+        });
+
+      day.classList.add("selected");
+
+      selectedDate = fechaTexto;
+
+      selectedTime = null;
+
+      document
+        .querySelectorAll(".time-slot")
+        .forEach((t) => {
+
+          t.classList.remove("selected");
+
+        });
+
+      actualizarResumen();
+
+      mostrarAgendaDelDia(fechaTexto);
+
+      cargarHorariosOcupados();
+
+    });
+
+    calendar.appendChild(day);
+
+  }
+
+}
+
+    /* ===================================== */
+/* MOSTRAR PROGRAMACION DEL DIA */
+/* CON EDICION */
+/* ===================================== */
+
+function mostrarAgendaDelDia(fechaTexto){
+
+  const container =
+    document.getElementById("agendaDia");
+
+  const agendasDelDia =
+    agendamientos.filter((a) => {
+
+      if(!a.fecha?.seconds) return false;
+
+      const fecha =
+        new Date(a.fecha.seconds * 1000);
+
+      const fechaAgenda =
+        fecha.toISOString().split("T")[0];
+
+      return fechaAgenda === fechaTexto;
+
+    });
+
+  if(agendasDelDia.length === 0){
+
+    container.innerHTML = `
+
+      <div class="sin-equipos">
+
+        No existen mantenimientos programados
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+  agendasDelDia.sort((a,b) => {
+
+    return a.hora.localeCompare(b.hora);
+
+  });
+
+  container.innerHTML = "";
+
+  agendasDelDia.forEach((a) => {
+
+    container.innerHTML += `
+
+      <div
+        class="agenda-item"
+        onclick="editarAgenda('${a.firebaseId}')"
+        style="cursor:pointer"
+      >
+
+        <h3>${a.hora}</h3>
+
+        <p>
+          <strong>Serie:</strong>
+          ${a.serie}
+        </p>
+
+        <p>
+          <strong>Modelo:</strong>
+          ${a.modelo}
+        </p>
+
+        <p>
+          <strong>Estado:</strong>
+          ${a.estado}
+        </p>
+
+        <br>
+
+        <small style="color:#2563eb">
+
+          Click para modificar programación
+
+        </small>
+
+      </div>
+
+    `;
+
+  });
+
+}
+
+    /* ===================================== */
+/* EDITAR PROGRAMACION */
+/* ===================================== */
+
+window.editarAgenda = async function(firebaseId){
+
+  const agenda =
+    agendamientos.find(
+      a => a.firebaseId === firebaseId
+    );
+
+  if(!agenda){
+    return;
+  }
+
+  // BUSCAR EQUIPO
+  const equipo =
+    montacargas.find(
+      e => e.Serie === agenda.serie
+    );
+
+  if(!equipo){
+    return;
+  }
+
+  selectedForklift = equipo;
+
+  selectedTime = agenda.hora;
+
+  // FECHA
+  if(agenda.fecha?.seconds){
+
+    const fecha =
+      new Date(
+        agenda.fecha.seconds * 1000
+      );
+
+    selectedDate =
+      fecha.toISOString().split("T")[0];
+
+  }
+
+  // MARCAR HORARIO
+  document
+    .querySelectorAll(".time-slot")
+    .forEach((slot) => {
+
+      slot.classList.remove("selected");
+
+      if(slot.dataset.hora === selectedTime){
+
+        slot.classList.add("selected");
+
+      }
+
+    });
+
+  actualizarResumen();
+
+  cargarHorariosOcupados();
+
+  mostrarNotificacion(
+    "Modo edición activado"
+  );
+
+}
+
+    /* ===================================== */
+/* CONFIRMAR */
+/* ACTUALIZA SI EXISTE */
+/* ===================================== */
+
+window.confirmarMantenimiento =
+async function(){
+
+  if(
+    !selectedForklift ||
+    !selectedDate ||
+    !selectedTime
+  ){
+
+    alert("Complete toda la información");
+
+    return;
+
+  }
+
+  try{
+
+    const existente =
+      agendamientos.find(
+        a => a.serie === selectedForklift.Serie
+      );
+
+    if(existente){
+
+      // ACTUALIZAR
+      await updateDoc(
+
+        doc(
+          db,
+          "AGENDAMIENTO",
+          existente.firebaseId
+        ),
+
+        {
+
+          fecha:
+            new Date(
+              selectedDate + "T00:00:00"
+            ),
+
+          hora:
+            selectedTime,
+
+          estado:
+            "PENDIENTE"
+
+        }
+
+      );
+
+      mostrarNotificacion(
+        "Programación actualizada"
+      );
+
+    }else{
+
+      // CREAR
+      await addDoc(
+
+        collection(db, "AGENDAMIENTO"),
+
+        {
+
+          serie:
+            selectedForklift.Serie,
+
+          modelo:
+            selectedForklift.Modelo || "",
+
+          fecha:
+            new Date(
+              selectedDate + "T00:00:00"
+            ),
+
+          hora:
+            selectedTime,
+
+          estado:
+            "PENDIENTE",
+
+          fechaCreacion:
+            new Date()
+
+        }
+
+      );
+
+      mostrarNotificacion(
+        "Mantenimiento agendado"
+      );
+
+    }
+
+    selectedForklift = null;
+    selectedDate = null;
+    selectedTime = null;
+
+    actualizarResumen();
+
+    await cargarDatos();
+
+  }catch(error){
+
+    console.log(error);
+
+    alert("ERROR GUARDANDO");
+
+  }
+
+}
+
 </script>
 
 </body>
