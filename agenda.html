@@ -470,7 +470,7 @@ function renderForklifts(){
       // FILTRO CLIENTE
       if(
         clienteSeleccionado !== "TODOS" &&
-        f.Royal !== clienteSeleccionado
+        f.Cliente !== clienteSeleccionado
       ){
         return false;
       }
@@ -517,7 +517,7 @@ function renderForklifts(){
         </div>
 
         <div class="info">
-          Cliente: ${f.Royal || "-"}
+          Cliente: ${f.Cliente || "-"}
         </div>
 
         <div class="info">
@@ -650,7 +650,7 @@ function renderCalendario(){
 
           if(
             !equipo ||
-            equipo.Royal !== clienteSeleccionado
+            equipo.Cliente !== clienteSeleccionado
           ){
             return false;
           }
@@ -848,7 +848,7 @@ function mostrarAgendaDelDia(fechaTexto){
 
         if(
           !equipo ||
-          equipo.Royal !== clienteSeleccionado
+          equipo.Cliente !== clienteSeleccionado
         ){
           return;
         }
@@ -1198,7 +1198,7 @@ function renderClientes(){
     "TODOS",
     ...new Set(
       montacargas
-        .map(e => e.Royal)
+        .map(e => e.Cliente)
         .filter(Boolean)
     )
   ];
