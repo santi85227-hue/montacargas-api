@@ -48,7 +48,7 @@ h1{
 
 .forklift-grid{
     display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
     gap:15px;
 }
 
@@ -81,9 +81,28 @@ h1{
     color:#4b5563;
 }
 
-.ubicacion{
+.info{
     margin-top:5px;
     color:#6b7280;
+    font-size:14px;
+}
+
+.estado-agenda{
+    margin-top:10px;
+    padding:10px;
+    border-radius:10px;
+    background:#f3f4f6;
+    font-size:14px;
+}
+
+.estado-confirmado{
+    background:#dcfce7;
+    color:#166534;
+}
+
+.estado-pendiente{
+    background:#fef3c7;
+    color:#92400e;
 }
 
 .calendar{
@@ -101,6 +120,7 @@ h1{
     text-align:center;
     cursor:pointer;
     transition:0.3s;
+    position:relative;
 }
 
 .day:hover{
@@ -110,6 +130,21 @@ h1{
 .day.selected{
     background:#2563eb;
     color:white;
+}
+
+.day.ocupado{
+    background:#dcfce7;
+    border:2px solid #16a34a;
+}
+
+.day.ocupado::after{
+    content:"✓";
+    position:absolute;
+    top:5px;
+    right:8px;
+    font-size:12px;
+    color:#16a34a;
+    font-weight:bold;
 }
 
 .time-slots{
@@ -176,6 +211,7 @@ h1{
     padding:16px 20px;
     border-radius:10px;
     display:none;
+    z-index:999;
 }
 
 </style>
@@ -246,15 +282,19 @@ import {
   collection,
   getDocs,
   addDoc,
+  updateDoc,
+  doc,
+  query,
+  where,
   onSnapshot
 
 }
 
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* ===================================== */
+/* ====================================== */
 /* FIREBASE */
-/* ===================================== */
+/* ====================================== */
 
 const firebaseConfig = {
 
@@ -276,11 +316,13 @@ const app = initializeApp(firebaseConfig);
 
 const db = getFirestore(app);
 
-/* ===================================== */
+/* ====================================== */
 /* VARIABLES */
-/* ===================================== */
+/* ====================================== */
 
 let montacargas = [];
+
+let agendamientos = [];
 
 let selectedForklift = null;
 
@@ -288,20 +330,51 @@ let selectedDate = null;
 
 let selectedTime = null;
 
-/* ===================================== */
-/* CARGAR EQUIPOS */
-/* ===================================== */
+/* ====================================== */
+/* CARGAR DATOS */
+/* ====================================== */
+
+async function cargarDatos(){
+
+  await cargarEquipos();
+
+  await cargarAgendamientos();
+
+  renderForklifts();
+
+  renderCalendar();
+}
 
 async function cargarEquipos(){
 
-  const querySnapshot =
-    await getDocs(collection(db, "EQUIPOS"));
+  const snapshot =
+    await getDocs(collection(db, "Equipos"));
 
   montacargas = [];
 
-  querySnapshot.forEach((docu) => {
+  snapshot.forEach((docu) => {
 
     montacargas.push({
+
+      firebaseId: docu.id,
+
+      ...docu.data()
+
+    });
+
+  });
+}
+
+async function cargarAgendamientos(){
+
+  const snapshot =
+    await getDocs(collection(db, "AGENDAMIENTO"));
+
+  agendamientos = [];
+
+  snapshot.forEach((docu) => {
+
+    agendamientos.push({
 
       id: docu.id,
 
@@ -310,71 +383,64 @@ async function cargarEquipos(){
     });
 
   });
-
-  renderForklifts();
 }
 
-cargarEquipos();
+cargarDatos();
 
-/* ===================================== */
-/* MOSTRAR EQUIPOS */
-/* ===================================== */
+/* ====================================== */
+/* RENDER EQUIPOS */
+/* ====================================== */
 
-async function renderForklifts(){
+function renderForklifts(){
 
   const container =
     document.getElementById("forkliftList");
 
   container.innerHTML = "";
 
-  // CONSULTAR AGENDAMIENTOS
-  const agSnapshot =
-    await getDocs(collection(db, "AGENDAMIENTO"));
-
-  const agendamientos = [];
-
-  agSnapshot.forEach((docu) => {
-
-    agendamientos.push(docu.data());
-
-  });
-
   montacargas.forEach((f) => {
 
-    // BUSCAR AGENDAMIENTO POR SERIE
     const agenda =
-      agendamientos.find(a => a.serie === f.id);
+      agendamientos.find(a =>
+        a.serie === f.Serie
+      );
 
-    let fechaAgenda = "-";
-    let horaAgenda = "-";
-    let estadoAgenda = "-";
+    let agendaHTML = `
+      <div class="estado-agenda">
+        Sin programación
+      </div>
+    `;
 
     if(agenda){
 
-      if(agenda.fecha?.seconds){
-
-        const fecha =
-          new Date(
+      const fecha =
+        agenda.fecha?.seconds
+        ? new Date(
             agenda.fecha.seconds * 1000
-          );
+          ).toLocaleDateString()
+        : "-";
 
-        fechaAgenda =
-          fecha.toLocaleDateString();
-
-      }
-
-      horaAgenda =
-        agenda.hora || "-";
-
-      estadoAgenda =
-        agenda.estado || "-";
+      agendaHTML = `
+        <div class="
+          estado-agenda
+          ${
+            agenda.estado === "CONFIRMADO"
+            ? "estado-confirmado"
+            : "estado-pendiente"
+          }
+        ">
+          <strong>${agenda.estado}</strong><br>
+          📅 ${fecha}<br>
+          🕐 ${agenda.hora}
+        </div>
+      `;
     }
 
     container.innerHTML += `
 
       <div
         class="forklift-card"
-        id="equipo-${f.id}"
+        id="equipo-${f.Serie}"
       >
 
         <div class="modelo">
@@ -382,33 +448,18 @@ async function renderForklifts(){
         </div>
 
         <div class="serie">
-          SERIAL: ${f.id}
+          SERIAL: ${f.Serie}
         </div>
 
-        <div class="ubicacion">
-          📍 ${f.Ubicacion || "-"}
+        <div class="info">
+          Royal: ${f.Royal || "-"}
         </div>
 
-        <hr style="margin:12px 0">
-
-        <div style="font-size:14px">
-
-          <p>
-            <strong>Fecha agenda:</strong>
-            ${fechaAgenda}
-          </p>
-
-          <p>
-            <strong>Hora:</strong>
-            ${horaAgenda}
-          </p>
-
-          <p>
-            <strong>Estado:</strong>
-            ${estadoAgenda}
-          </p>
-
+        <div class="info">
+          Estado: ${f.Estado || "-"}
         </div>
+
+        ${agendaHTML}
 
       </div>
 
@@ -418,69 +469,106 @@ async function renderForklifts(){
   montacargas.forEach((f) => {
 
     document
-      .getElementById(`equipo-${f.id}`)
+      .getElementById(`equipo-${f.Serie}`)
       .addEventListener("click", () => {
 
         document
           .querySelectorAll(".forklift-card")
-          .forEach((card) => {
+          .forEach((c) => {
 
-            card.classList.remove("selected");
+            c.classList.remove("selected");
 
           });
 
         document
-          .getElementById(`equipo-${f.id}`)
+          .getElementById(`equipo-${f.Serie}`)
           .classList.add("selected");
 
         selectedForklift = f;
 
         actualizarResumen();
+
+        renderCalendar();
       });
   });
 }
-/* ===================================== */
+
+/* ====================================== */
 /* CALENDARIO */
-/* ===================================== */
+/* ====================================== */
 
-const calendar =
-  document.getElementById("calendar");
+function renderCalendar(){
 
-for(let i=1; i<=30; i++){
+  const calendar =
+    document.getElementById("calendar");
 
-  const day =
-    document.createElement("div");
+  calendar.innerHTML = "";
 
-  day.className = "day";
+  for(let i = 1; i <= 30; i++){
 
-  day.innerText = i;
+    const fecha =
+      `2026-05-${String(i).padStart(2,"0")}`;
 
-  day.addEventListener("click", async () => {
+    const day =
+      document.createElement("div");
 
-    document
-      .querySelectorAll(".day")
-      .forEach((d) => {
+    day.className = "day";
 
-        d.classList.remove("selected");
+    day.innerText = i;
 
-      });
+    if(selectedDate === fecha){
 
-    day.classList.add("selected");
+      day.classList.add("selected");
+    }
 
-    selectedDate =
-      `2026-05-${String(i).padStart(2,'0')}`;
+    // VALIDAR SI EL EQUIPO YA TIENE
+    // UNA FECHA CONFIRMADA
 
-    actualizarResumen();
+    if(selectedForklift){
 
-    await cargarHorariosOcupados();
-  });
+      const agenda =
+        agendamientos.find(a =>
 
-  calendar.appendChild(day);
+          a.serie === selectedForklift.Serie &&
+          a.estado === "CONFIRMADO"
+        );
+
+      if(agenda){
+
+        const fechaAgenda =
+          agenda.fecha.seconds
+          ? new Date(
+              agenda.fecha.seconds * 1000
+            )
+            .toISOString()
+            .split("T")[0]
+          : null;
+
+        if(fechaAgenda === fecha){
+
+          day.classList.add("ocupado");
+        }
+      }
+    }
+
+    day.addEventListener("click", async () => {
+
+      selectedDate = fecha;
+
+      renderCalendar();
+
+      await cargarHorariosOcupados();
+
+      actualizarResumen();
+    });
+
+    calendar.appendChild(day);
+  }
 }
 
-/* ===================================== */
+/* ====================================== */
 /* HORARIOS */
-/* ===================================== */
+/* ====================================== */
 
 const horas = [
 
@@ -532,9 +620,54 @@ horas.forEach((hora) => {
   timeSlots.appendChild(div);
 });
 
-/* ===================================== */
+/* ====================================== */
+/* HORARIOS OCUPADOS */
+/* ====================================== */
+
+async function cargarHorariosOcupados(){
+
+  document
+    .querySelectorAll(".time-slot")
+    .forEach((btn) => {
+
+      btn.classList.remove("ocupado");
+
+      btn.style.pointerEvents = "auto";
+    });
+
+  agendamientos.forEach((a) => {
+
+    if(!a.fecha?.seconds){
+      return;
+    }
+
+    const fechaAgenda =
+      new Date(
+        a.fecha.seconds * 1000
+      )
+      .toISOString()
+      .split("T")[0];
+
+    if(fechaAgenda === selectedDate){
+
+      document
+        .querySelectorAll(".time-slot")
+        .forEach((btn) => {
+
+          if(btn.dataset.hora === a.hora){
+
+            btn.classList.add("ocupado");
+
+            btn.style.pointerEvents = "none";
+          }
+        });
+    }
+  });
+}
+
+/* ====================================== */
 /* RESUMEN */
-/* ===================================== */
+/* ====================================== */
 
 function actualizarResumen(){
 
@@ -549,8 +682,8 @@ function actualizarResumen(){
     </p>
 
     <p>
-      <strong>Serial:</strong>
-      ${selectedForklift?.id || "-"}
+      <strong>Serie:</strong>
+      ${selectedForklift?.Serie || "-"}
     </p>
 
     <p>
@@ -566,48 +699,9 @@ function actualizarResumen(){
   `;
 }
 
-/* ===================================== */
-/* HORARIOS OCUPADOS */
-/* ===================================== */
-
-async function cargarHorariosOcupados(){
-
-  document
-    .querySelectorAll(".time-slot")
-    .forEach((btn) => {
-
-      btn.classList.remove("ocupado");
-
-      btn.style.pointerEvents = "auto";
-    });
-
-  const snapshot =
-    await getDocs(collection(db, "AGENDAMIENTO"));
-
-  snapshot.forEach((docu) => {
-
-    const data = docu.data();
-
-    if(data.fecha === selectedDate){
-
-      document
-        .querySelectorAll(".time-slot")
-        .forEach((btn) => {
-
-          if(btn.dataset.hora === data.hora){
-
-            btn.classList.add("ocupado");
-
-            btn.style.pointerEvents = "none";
-          }
-        });
-    }
-  });
-}
-
-/* ===================================== */
-/* GUARDAR AGENDAMIENTO */
-/* ===================================== */
+/* ====================================== */
+/* GUARDAR */
+/* ====================================== */
 
 window.confirmarMantenimiento =
 async function(){
@@ -625,26 +719,120 @@ async function(){
 
   try{
 
-    await addDoc(
+    // BUSCAR SI EL EQUIPO YA EXISTE
+
+    const q = query(
       collection(db, "AGENDAMIENTO"),
-      {
-        serie: selectedForklift.id,
-        modelo: selectedForklift.Modelo || "",
-        fecha: new Date(selectedDate + "T00:00:00"),
-        hora: selectedTime,
-        estado: "PENDIENTE",
-        fechaCreacion:
-          new Date().toISOString()
-      }
+      where(
+        "serie",
+        "==",
+        selectedForklift.Serie
+      )
     );
 
-    mostrarNotificacion(
-      "Mantenimiento agendado correctamente"
-    );
+    const snapshot =
+      await getDocs(q);
+
+    // FECHA NUEVA
+    const nuevaFecha =
+      new Date(selectedDate + "T00:00:00");
+
+    // SI YA EXISTE
+    if(!snapshot.empty){
+
+      const docExistente =
+        snapshot.docs[0];
+
+      const data =
+        docExistente.data();
+
+      // VALIDAR SI ESTA DENTRO DEL MES
+      if(data.fecha?.seconds){
+
+        const fechaActual =
+          new Date(
+            data.fecha.seconds * 1000
+          );
+
+        const mismoMes =
+          fechaActual.getMonth() ===
+          nuevaFecha.getMonth();
+
+        if(!mismoMes){
+
+          alert(
+            "Solo puede reprogramarse dentro del mismo mes"
+          );
+
+          return;
+        }
+      }
+
+      await updateDoc(
+
+        doc(
+          db,
+          "AGENDAMIENTO",
+          docExistente.id
+        ),
+
+        {
+
+          fecha: nuevaFecha,
+
+          hora: selectedTime,
+
+          estado: "PENDIENTE",
+
+          fechaActualizacion:
+            new Date()
+        }
+      );
+
+      mostrarNotificacion(
+        "Mantenimiento reprogramado"
+      );
+
+    }else{
+
+      await addDoc(
+
+        collection(db, "AGENDAMIENTO"),
+
+        {
+
+          serie:
+            selectedForklift.Serie,
+
+          modelo:
+            selectedForklift.Modelo || "",
+
+          fecha:
+            nuevaFecha,
+
+          hora:
+            selectedTime,
+
+          estado:
+            "PENDIENTE",
+
+          fechaCreacion:
+            new Date()
+        }
+      );
+
+      mostrarNotificacion(
+        "Mantenimiento agendado"
+      );
+    }
 
     selectedTime = null;
 
-    actualizarResumen();
+    await cargarAgendamientos();
+
+    renderForklifts();
+
+    renderCalendar();
 
     cargarHorariosOcupados();
 
@@ -656,9 +844,9 @@ async function(){
   }
 }
 
-/* ===================================== */
+/* ====================================== */
 /* NOTIFICACION */
-/* ===================================== */
+/* ====================================== */
 
 function mostrarNotificacion(texto){
 
@@ -676,13 +864,19 @@ function mostrarNotificacion(texto){
   }, 3000);
 }
 
-/* ===================================== */
-/* ACTUALIZACION AUTOMATICA */
-/* ===================================== */
+/* ====================================== */
+/* REALTIME */
+/* ====================================== */
 
 onSnapshot(
   collection(db, "AGENDAMIENTO"),
-  () => {
+  async () => {
+
+    await cargarAgendamientos();
+
+    renderForklifts();
+
+    renderCalendar();
 
     if(selectedDate){
 
