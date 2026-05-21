@@ -248,6 +248,21 @@ h1{
 <h1>🔧 Agendamiento de Mantenimiento</h1>
 
 <div class="card">
+    <h2>🏢 Seleccionar Cliente</h2>
+    <select
+        id="clienteSelect"
+        style="
+            width:100%;
+            padding:14px;
+            border-radius:10px;
+            border:1px solid #d1d5db;
+            font-size:16px;
+        "
+    >
+    </select>
+</div>
+
+<div class="card">
 
 <h2>1. Equipos Disponibles</h2>
 
@@ -369,6 +384,8 @@ let selectedTime = null;
 
 let agendamientoEditando = null;
 
+let clienteSeleccionado = "TODOS";
+
 /* ===================================== */
 /* CARGAR DATOS */
 /* ===================================== */
@@ -379,6 +396,8 @@ async function cargarDatos(){
 
   await cargarAgendamientos();
 
+  renderClientes();
+    
   renderForklifts();
 
   renderCalendario();
@@ -1113,6 +1132,51 @@ onSnapshot(
     await cargarDatos();
   }
 );
+    /* ===================================== */
+/* CLIENTES */
+/* ===================================== */
+
+function renderClientes(){
+
+  const select =
+    document.getElementById("clienteSelect");
+
+  select.innerHTML = "";
+
+  const clientes = [
+    "TODOS",
+    ...new Set(
+      montacargas.map(e => e.Royal || "SIN CLIENTE")
+    )
+  ];
+
+  clientes.forEach((cliente) => {
+
+    const option =
+      document.createElement("option");
+
+    option.value = cliente;
+
+    option.innerText = cliente;
+
+    select.appendChild(option);
+
+  });
+
+  select.value = clienteSeleccionado;
+
+  select.addEventListener("change", () => {
+
+    clienteSeleccionado = select.value;
+
+    renderForklifts();
+
+    renderCalendario();
+
+    document.getElementById("agendaDia").innerHTML =
+      "Seleccione un día del calendario";
+  });
+}
 
 </script>
 
