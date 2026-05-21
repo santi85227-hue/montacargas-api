@@ -943,6 +943,169 @@ onSnapshot(
   }
 );
 
+    /* ===================================== */
+/* MOSTRAR PROGRAMACION DEL DIA */
+/* ===================================== */
+
+function mostrarAgendaDelDia(fechaTexto){
+
+  const container =
+    document.getElementById("agendaDia");
+
+  const agendasDelDia = [];
+
+  agendamientos.forEach((a) => {
+
+    if(!a.fecha?.seconds) return;
+
+    const fecha =
+      new Date(a.fecha.seconds * 1000);
+
+    const fechaAgenda =
+      fecha.toISOString().split("T")[0];
+
+    if(fechaAgenda === fechaTexto){
+
+      agendasDelDia.push(a);
+    }
+  });
+
+  if(agendasDelDia.length === 0){
+
+    container.innerHTML = `
+
+      <p>
+        No existen mantenimientos programados
+      </p>
+
+    `;
+
+    return;
+  }
+
+  agendasDelDia.sort((a,b) => {
+
+    return a.hora.localeCompare(b.hora);
+
+  });
+
+  container.innerHTML = "";
+
+  agendasDelDia.forEach((a) => {
+
+    container.innerHTML += `
+
+      <div
+        class="agenda-item"
+        id="agenda-${a.firebaseId}"
+        style="cursor:pointer"
+      >
+
+        <h3>${a.hora}</h3>
+
+        <p>
+          <strong>Serie:</strong>
+          ${a.serie}
+        </p>
+
+        <p>
+          <strong>Modelo:</strong>
+          ${a.modelo}
+        </p>
+
+        <p>
+          <strong>Estado:</strong>
+          ${a.estado}
+        </p>
+
+        <p style="margin-top:10px;color:#2563eb">
+          CLICK PARA MODIFICAR
+        </p>
+
+      </div>
+
+    `;
+  });
+
+  // EVENTOS CLICK
+  agendasDelDia.forEach((a) => {
+
+    const card =
+      document.getElementById(
+        `agenda-${a.firebaseId}`
+      );
+
+    card.addEventListener("click", async () => {
+
+      // BUSCAR EQUIPO REAL
+      const equipo =
+        montacargas.find(
+          e => e.Serie === a.serie
+        );
+
+      if(!equipo){
+        return;
+      }
+
+      // ASIGNAR EQUIPO
+      selectedForklift = equipo;
+
+      // ASIGNAR FECHA
+      const fecha =
+        new Date(a.fecha.seconds * 1000);
+
+      selectedDate =
+        fecha.toISOString().split("T")[0];
+
+      // ASIGNAR HORA
+      selectedTime = a.hora;
+
+      // RESALTAR HORARIO
+      document
+        .querySelectorAll(".time-slot")
+        .forEach((t) => {
+
+          t.classList.remove("selected");
+
+          if(
+            t.dataset.hora === a.hora
+          ){
+            t.classList.add("selected");
+          }
+        });
+
+      // RESALTAR DIA
+      document
+        .querySelectorAll(".day")
+        .forEach((d) => {
+
+          d.classList.remove("selected");
+        });
+
+      const dia =
+        fecha.getDate();
+
+      const diaElemento =
+        document.getElementById(
+          `dia-${dia}`
+        );
+
+      if(diaElemento){
+
+        diaElemento.classList.add("selected");
+      }
+
+      actualizarResumen();
+
+      await cargarHorariosOcupados();
+
+      mostrarNotificacion(
+        "Programación cargada para edición"
+      );
+    });
+  });
+}
+
 </script>
 
 </body>
