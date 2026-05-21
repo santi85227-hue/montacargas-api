@@ -218,3 +218,12 @@ box-shadow:0 0 12px #22c55e;
 
   cursor:not-allowed;
 }
+
+.btn-masivo{
+    margin-top:10px;
+    background:#059669;
+}
+
+.btn-masivo:hover{
+    background:#047857;
+}
