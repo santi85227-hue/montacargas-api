@@ -465,15 +465,14 @@ function renderForklifts(){
   container.innerHTML = "";
 
   const equiposDisponibles =
-    montacargas.filter((f) => {
+  montacargas.filter((f) => {
 
-      const yaExiste =
-        agendamientos.find(
-          a => a.serie === f.Serie
-        );
-
-      return !yaExiste;
-    });
+    if(
+      clienteSeleccionado !== "TODOS" &&
+      f.Royal !== clienteSeleccionado
+    ){
+      return false;
+    }
 
   if(equiposDisponibles.length === 0){
 
@@ -613,18 +612,24 @@ function renderCalendario(){
       `2026-05-${String(dia).padStart(2,'0')}`;
 
     const agendasDia =
-      agendamientos.filter((a) => {
+  agendamientos.filter((a) => {
 
-        if(!a.fecha?.seconds) return false;
+    if(
+      clienteSeleccionado !== "TODOS"
+    ){
 
-        const fecha =
-          new Date(a.fecha.seconds * 1000);
+      const equipo =
+        montacargas.find(
+          e => e.Serie === a.serie
+        );
 
-        const fechaAgenda =
-          fecha.toISOString().split("T")[0];
-
-        return fechaAgenda === fechaTexto;
-      });
+      if(
+        !equipo ||
+        equipo.Royal !== clienteSeleccionado
+      ){
+        return false;
+      }
+    }
 
     const day =
       document.createElement("div");
@@ -807,8 +812,20 @@ function mostrarAgendaDelDia(fechaTexto){
 
     if(fechaAgenda === fechaTexto){
 
-      agendasDelDia.push(a);
+  if(clienteSeleccionado !== "TODOS"){
+
+    const equipo =
+      montacargas.find(
+        e => e.Serie === a.serie
+      );
+
+    if(
+      !equipo ||
+      equipo.Royal !== clienteSeleccionado
+    ){
+      return;
     }
+  }
   });
 
   if(agendasDelDia.length === 0){
