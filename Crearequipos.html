@@ -1,15 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Crear Equipos</title>
-
 <style>
-
 *{
     margin:0;
     padding:0;
@@ -97,57 +92,33 @@ select:focus{
     background:#fee2e2;
     color:#991b1b;
 }
-
 </style>
-
 </head>
-
 <body>
-
 <div class="container">
-
 <div class="card">
-
 <h1>🚜 Crear Equipo</h1>
-
 <div class="form-group">
-
 <label>Serie</label>
-
 <input type="text" id="serie">
-
 </div>
-
 <div class="form-group">
-
 <label>Modelo</label>
-
 <input type="text" id="modelo">
-
 </div>
-
 <div class="form-group">
-
 <label>Royal</label>
-
 <input type="text" id="royal">
-
 </div>
-
 <div class="form-group">
-
 <label>Estado</label>
-
 <select id="estado">
-
 <option value="OPERATIVO">
 OPERATIVO
 </option>
-
 <option value="INOPERATIVO">
 INOPERATIVO
 </option>
-
 <option value="MANTENIMIENTO">
 MANTENIMIENTO
 </option>
@@ -210,8 +181,8 @@ FALSE
     GUARDAR EQUIPO
 </button>
 
-<button class="btn" onclick="guardarEquipo()">
-    GUARDAR EQUIPO
+<button class="btn" onclick="cargueMasivo()">
+    CARGUE MASIVO
 </button>
 
 <div id="notification" class="notification"></div>
