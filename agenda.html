@@ -299,7 +299,7 @@ CONFIRMAR MANTENIMIENTO
 </div>
 
 <div class="notification" id="notification"></div>
-
+```html
 <script type="module">
 
 import { initializeApp }
@@ -427,13 +427,16 @@ function renderForklifts(){
 
   montacargas.forEach((f) => {
 
-    // BUSCAR SI YA ESTA PROGRAMADO
     const yaProgramado =
       agendamientos.find(
-        a => a.serie === f.Serie
+        a =>
+          a.serie === f.Serie &&
+          (
+            a.estado === "PENDIENTE" ||
+            a.estado === "APROBADO"
+          )
       );
 
-    // SI YA ESTA PROGRAMADO NO MOSTRAR
     if(yaProgramado){
       return;
     }
@@ -453,8 +456,12 @@ function renderForklifts(){
           SERIAL: ${f.Serie}
         </div>
 
-        <div class="ubicacion">
+        <div class="info">
           Royal: ${f.Royal || "-"}
+        </div>
+
+        <div class="info">
+          Estado: ${f.Estado || "-"}
         </div>
 
       </div>
@@ -482,9 +489,7 @@ function renderForklifts(){
 
       selectedForklift = f;
 
-        actualizarResumen();        
-        cargarHorariosOcupados();
-        mostrarAgendaDelDia(selectedDate);
+      actualizarResumen();
     });
   });
 }
@@ -495,6 +500,13 @@ function renderForklifts(){
 
 const calendar =
   document.getElementById("calendar");
+
+const hoy = new Date();
+
+const year = hoy.getFullYear();
+
+const month =
+  String(hoy.getMonth() + 1).padStart(2,"0");
 
 for(let i=1; i<=31; i++){
 
@@ -532,21 +544,42 @@ for(let i=1; i<=31; i++){
     day.classList.add("selected");
 
     selectedDate =
-      `2026-05-${String(i).padStart(2,'0')}`;
+      `${year}-${month}-${String(i).padStart(2,'0')}`;
 
     actualizarResumen();
 
     cargarHorariosOcupados();
+
+    mostrarAgendaDelDia(selectedDate);
   });
 
   calendar.appendChild(day);
 }
 
 /* ===================================== */
-/* MOSTRAR AGENDADOS EN CALENDARIO */
+/* CALENDARIO AGENDADO */
 /* ===================================== */
 
 function renderCalendarioAgendado(){
+
+  for(let i=1; i<=31; i++){
+
+    const agenda =
+      document.getElementById(`agenda-${i}`);
+
+    if(agenda){
+
+      agenda.innerHTML = "";
+    }
+
+    const dia =
+      document.getElementById(`dia-${i}`);
+
+    if(dia){
+
+      dia.classList.remove("ocupado");
+    }
+  }
 
   agendamientos.forEach((a) => {
 
@@ -561,15 +594,25 @@ function renderCalendarioAgendado(){
     const agenda =
       document.getElementById(`agenda-${dia}`);
 
+    const divDia =
+      document.getElementById(`dia-${dia}`);
+
     if(agenda){
 
-      agenda.innerHTML = `
+      agenda.innerHTML += `
 
-        🔒 ${a.hora}
+        <div>
+          ${a.hora}
+        </div>
 
       `;
 
       agenda.style.color = "red";
+    }
+
+    if(divDia){
+
+      divDia.classList.add("ocupado");
     }
   });
 }
@@ -627,10 +670,10 @@ horas.forEach((hora) => {
 });
 
 /* ===================================== */
-/* BLOQUEAR HORARIOS */
+/* HORARIOS OCUPADOS */
 /* ===================================== */
 
-async function cargarHorariosOcupados(){
+function cargarHorariosOcupados(){
 
   document
     .querySelectorAll(".time-slot")
@@ -648,8 +691,13 @@ async function cargarHorariosOcupados(){
     const fecha =
       new Date(a.fecha.seconds * 1000);
 
+    const fechaLocal = new Date(
+      fecha.getTime() -
+      fecha.getTimezoneOffset() * 60000
+    );
+
     const fechaTexto =
-      fecha.toISOString().split("T")[0];
+      fechaLocal.toISOString().split("T")[0];
 
     if(fechaTexto === selectedDate){
 
@@ -722,7 +770,6 @@ async function(){
 
   try{
 
-    // VALIDAR SI YA EXISTE
     const existente =
       agendamientos.find(
         a => a.serie === selectedForklift.Serie
@@ -730,7 +777,6 @@ async function(){
 
     if(existente){
 
-      // ACTUALIZAR
       await updateDoc(
 
         doc(
@@ -754,7 +800,6 @@ async function(){
 
     }else{
 
-      // CREAR
       await addDoc(
 
         collection(db, "AGENDAMIENTO"),
@@ -785,8 +830,16 @@ async function(){
     }
 
     mostrarNotificacion(
-      "Mantenimiento agendado"
+      "Mantenimiento agendado correctamente"
     );
+
+    selectedForklift = null;
+
+    selectedDate = null;
+
+    selectedTime = null;
+
+    actualizarResumen();
 
     await cargarDatos();
 
@@ -799,38 +852,7 @@ async function(){
 }
 
 /* ===================================== */
-/* NOTIFICACION */
-/* ===================================== */
-
-function mostrarNotificacion(texto){
-
-  const n =
-    document.getElementById("notification");
-
-  n.innerText = texto;
-
-  n.style.display = "block";
-
-  setTimeout(() => {
-
-    n.style.display = "none";
-
-  }, 3000);
-}
-
-/* ===================================== */
-/* TIEMPO REAL */
-/* ===================================== */
-
-onSnapshot(
-  collection(db, "AGENDAMIENTO"),
-  async () => {
-
-    await cargarDatos();
-  }
-);
-    /* ===================================== */
-/* MOSTRAR PROGRAMACION DEL DIA */
+/* AGENDA DEL DIA */
 /* ===================================== */
 
 function mostrarAgendaDelDia(fechaTexto){
@@ -847,8 +869,13 @@ function mostrarAgendaDelDia(fechaTexto){
     const fecha =
       new Date(a.fecha.seconds * 1000);
 
+    const fechaLocal = new Date(
+      fecha.getTime() -
+      fecha.getTimezoneOffset() * 60000
+    );
+
     const fechaAgenda =
-      fecha.toISOString().split("T")[0];
+      fechaLocal.toISOString().split("T")[0];
 
     if(fechaAgenda === fechaTexto){
 
@@ -906,6 +933,44 @@ function mostrarAgendaDelDia(fechaTexto){
   });
 }
 
+/* ===================================== */
+/* NOTIFICACION */
+/* ===================================== */
+
+function mostrarNotificacion(texto){
+
+  const n =
+    document.getElementById("notification");
+
+  n.innerText = texto;
+
+  n.style.display = "block";
+
+  setTimeout(() => {
+
+    n.style.display = "none";
+
+  }, 3000);
+}
+
+/* ===================================== */
+/* TIEMPO REAL */
+/* ===================================== */
+
+onSnapshot(
+  collection(db, "AGENDAMIENTO"),
+  async () => {
+
+    await cargarDatos();
+
+    if(selectedDate){
+
+      mostrarAgendaDelDia(selectedDate);
+
+      cargarHorariosOcupados();
+    }
+  }
+);
+
 </script>
-</body>
-</html>
+
