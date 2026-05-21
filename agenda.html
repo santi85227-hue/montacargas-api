@@ -29,7 +29,7 @@ h1{
 }
 
 .container{
-    max-width:1200px;
+    max-width:1400px;
     margin:auto;
 }
 
@@ -58,6 +58,7 @@ h1{
     padding:16px;
     cursor:pointer;
     transition:0.3s;
+    background:white;
 }
 
 .forklift-card:hover{
@@ -87,24 +88,6 @@ h1{
     font-size:14px;
 }
 
-.estado-agenda{
-    margin-top:10px;
-    padding:10px;
-    border-radius:10px;
-    background:#f3f4f6;
-    font-size:14px;
-}
-
-.estado-confirmado{
-    background:#dcfce7;
-    color:#166534;
-}
-
-.estado-pendiente{
-    background:#fef3c7;
-    color:#92400e;
-}
-
 .calendar{
     display:grid;
     grid-template-columns:repeat(7,1fr);
@@ -121,6 +104,7 @@ h1{
     cursor:pointer;
     transition:0.3s;
     position:relative;
+    min-height:90px;
 }
 
 .day:hover{
@@ -133,16 +117,17 @@ h1{
 }
 
 .day.ocupado{
-    background:#dcfce7;
     border:2px solid #16a34a;
 }
 
-.day.ocupado::after{
-    content:"✓";
-    position:absolute;
-    top:5px;
-    right:8px;
-    font-size:12px;
+.day-numero{
+    font-size:18px;
+    font-weight:bold;
+}
+
+.day-agenda{
+    margin-top:8px;
+    font-size:11px;
     color:#16a34a;
     font-weight:bold;
 }
@@ -161,6 +146,7 @@ h1{
     text-align:center;
     cursor:pointer;
     transition:0.3s;
+    background:white;
 }
 
 .time-slot:hover{
@@ -176,7 +162,7 @@ h1{
     background:#d1d5db;
     color:#6b7280;
     cursor:not-allowed;
-    opacity:0.5;
+    opacity:0.6;
 }
 
 .btn{
@@ -201,30 +187,6 @@ h1{
     border-radius:12px;
     margin-top:20px;
 }
-    .agenda-item{
-
-    border:1px solid #d1d5db;
-
-    border-radius:12px;
-
-    padding:15px;
-
-    margin-bottom:10px;
-
-    background:white;
-}
-
-.agenda-item h3{
-
-    color:#2563eb;
-
-    margin-bottom:8px;
-}
-
-.agenda-item p{
-
-    margin:4px 0;
-}
 
 .notification{
     position:fixed;
@@ -236,6 +198,25 @@ h1{
     border-radius:10px;
     display:none;
     z-index:999;
+}
+
+.agenda-item{
+    border:1px solid #d1d5db;
+    border-radius:12px;
+    padding:15px;
+    margin-bottom:10px;
+    background:#ffffff;
+}
+
+.agenda-item h3{
+    color:#2563eb;
+    margin-bottom:8px;
+}
+
+.sin-equipos{
+    text-align:center;
+    padding:20px;
+    color:#6b7280;
 }
 
 </style>
@@ -250,7 +231,7 @@ h1{
 
 <div class="card">
 
-<h2>1. Selecciona el equipo</h2>
+<h2>1. Equipos Disponibles</h2>
 
 <div class="forklift-grid" id="forkliftList"></div>
 
@@ -258,21 +239,27 @@ h1{
 
 <div class="card">
 
-<h2>2. Selecciona el día</h2>
+<h2>2. Calendario de Programación</h2>
 
 <div class="calendar" id="calendar"></div>
 
 </div>
+
 <div class="card">
-    <h2>📅 Programación del Día</h2>
-    <div id="agendaDia">
-        Seleccione un día del calendario
-    </div>
+
+<h2>📅 Programación del Día</h2>
+
+<div id="agendaDia">
+
+Seleccione un día del calendario
+
+</div>
+
 </div>
 
 <div class="card">
 
-<h2>3. Selecciona la hora</h2>
+<h2>3. Seleccionar Hora</h2>
 
 <div class="time-slots" id="timeSlots"></div>
 
@@ -299,13 +286,15 @@ CONFIRMAR MANTENIMIENTO
 </div>
 
 <div class="notification" id="notification"></div>
-```html
+
 <script type="module">
 
 import { initializeApp }
+
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
+
   getFirestore,
   collection,
   getDocs,
@@ -313,7 +302,9 @@ import {
   updateDoc,
   doc,
   onSnapshot
+
 }
+
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /* ===================================== */
@@ -333,6 +324,7 @@ const firebaseConfig = {
   messagingSenderId: "321697235731",
 
   appId: "1:321697235731:web:d54b1bf957d3a95641d0e6"
+
 };
 
 const app = initializeApp(firebaseConfig);
@@ -354,7 +346,7 @@ let selectedDate = null;
 let selectedTime = null;
 
 /* ===================================== */
-/* CARGAR TODO */
+/* CARGAR DATOS */
 /* ===================================== */
 
 async function cargarDatos(){
@@ -365,7 +357,7 @@ async function cargarDatos(){
 
   renderForklifts();
 
-  renderCalendarioAgendado();
+  renderCalendario();
 }
 
 cargarDatos();
@@ -388,7 +380,9 @@ async function cargarEquipos(){
       id: docu.id,
 
       ...docu.data()
+
     });
+
   });
 }
 
@@ -410,7 +404,9 @@ async function cargarAgendamientos(){
       firebaseId: docu.id,
 
       ...docu.data()
+
     });
+
   });
 }
 
@@ -425,23 +421,35 @@ function renderForklifts(){
 
   container.innerHTML = "";
 
-  montacargas.forEach((f) => {
+  const equiposDisponibles =
+    montacargas.filter((f) => {
 
-    const yaProgramado =
-      agendamientos.find(
-        a =>
-          a.serie === f.Serie &&
-          (
-            a.estado === "PENDIENTE" ||
-            a.estado === "APROBADO"
-          )
-      );
+      const yaExiste =
+        agendamientos.find(
+          a => a.serie === f.Serie
+        );
 
-    if(yaProgramado){
-      return;
-    }
+      return !yaExiste;
+    });
 
-    container.innerHTML += 
+  if(equiposDisponibles.length === 0){
+
+    container.innerHTML = `
+
+      <div class="sin-equipos">
+
+        No existen equipos disponibles
+
+      </div>
+
+    `;
+
+    return;
+  }
+
+  equiposDisponibles.forEach((f) => {
+
+    container.innerHTML += `
 
       <div
         class="forklift-card"
@@ -466,15 +474,13 @@ function renderForklifts(){
 
       </div>
 
-    ;
+    `;
   });
 
-  montacargas.forEach((f) => {
+  equiposDisponibles.forEach((f) => {
 
     const card =
-      document.getElementById(equipo-${f.Serie});
-
-    if(!card) return;
+      document.getElementById(`equipo-${f.Serie}`);
 
     card.addEventListener("click", () => {
 
@@ -483,6 +489,7 @@ function renderForklifts(){
         .forEach((c) => {
 
           c.classList.remove("selected");
+
         });
 
       card.classList.add("selected");
@@ -490,7 +497,9 @@ function renderForklifts(){
       selectedForklift = f;
 
       actualizarResumen();
+
     });
+
   });
 }
 
@@ -498,123 +507,92 @@ function renderForklifts(){
 /* CALENDARIO */
 /* ===================================== */
 
-const calendar =
-  document.getElementById("calendar");
+function renderCalendario(){
 
-const hoy = new Date();
+  const calendar =
+    document.getElementById("calendar");
 
-const year = hoy.getFullYear();
-
-const month =
-  String(hoy.getMonth() + 1).padStart(2,"0");
-
-for(let i=1; i<=31; i++){
-
-  const day =
-    document.createElement("div");
-
-  day.className = "day";
-
-  day.id = `dia-${i}`;
-
-  day.innerHTML = `
-
-    <div>${i}</div>
-
-    <small
-      id="agenda-${i}"
-      style="
-        display:block;
-        margin-top:5px;
-        font-size:10px;
-      "
-    ></small>
-
-  `;
-
-  day.addEventListener("click", () => {
-
-    document
-      .querySelectorAll(".day")
-      .forEach((d) => {
-
-        d.classList.remove("selected");
-      });
-
-    day.classList.add("selected");
-
-    selectedDate =
-      `${year}-${month}-${String(i).padStart(2,'0')}`;
-
-    actualizarResumen();
-
-    cargarHorariosOcupados();
-
-    mostrarAgendaDelDia(selectedDate);
-  });
-
-  calendar.appendChild(day);
-}
-
-/* ===================================== */
-/* CALENDARIO AGENDADO */
-/* ===================================== */
-
-function renderCalendarioAgendado(){
+  calendar.innerHTML = "";
 
   for(let i=1; i<=31; i++){
 
-    const agenda =
-      document.getElementById(`agenda-${i}`);
+    const fechaTexto =
+      `2026-05-${String(i).padStart(2,'0')}`;
 
-    if(agenda){
+    const agendasDia =
+      agendamientos.filter((a) => {
 
-      agenda.innerHTML = "";
+        if(!a.fecha?.seconds) return false;
+
+        const fecha =
+          new Date(a.fecha.seconds * 1000);
+
+        const fechaAgenda =
+          fecha.toISOString().split("T")[0];
+
+        return fechaAgenda === fechaTexto;
+
+      });
+
+    const day =
+      document.createElement("div");
+
+    day.className = "day";
+
+    if(agendasDia.length > 0){
+
+      day.classList.add("ocupado");
+
     }
 
-    const dia =
-      document.getElementById(`dia-${i}`);
+    day.innerHTML = `
 
-    if(dia){
+      <div class="day-numero">
+        ${i}
+      </div>
 
-      dia.classList.remove("ocupado");
-    }
+      <div class="day-agenda">
+        ${agendasDia.length}
+        agenda(s)
+      </div>
+
+    `;
+
+    day.addEventListener("click", () => {
+
+      document
+        .querySelectorAll(".day")
+        .forEach((d) => {
+
+          d.classList.remove("selected");
+
+        });
+
+      day.classList.add("selected");
+
+      selectedDate = fechaTexto;
+
+      selectedTime = null;
+
+      document
+        .querySelectorAll(".time-slot")
+        .forEach((t) => {
+
+          t.classList.remove("selected");
+
+        });
+
+      actualizarResumen();
+
+      mostrarAgendaDelDia(fechaTexto);
+
+      cargarHorariosOcupados();
+
+    });
+
+    calendar.appendChild(day);
+
   }
-
-  agendamientos.forEach((a) => {
-
-    if(!a.fecha?.seconds) return;
-
-    const fecha =
-      new Date(a.fecha.seconds * 1000);
-
-    const dia =
-      fecha.getDate();
-
-    const agenda =
-      document.getElementById(`agenda-${dia}`);
-
-    const divDia =
-      document.getElementById(`dia-${dia}`);
-
-    if(agenda){
-
-      agenda.innerHTML += `
-
-        <div>
-          ${a.hora}
-        </div>
-
-      `;
-
-      agenda.style.color = "red";
-    }
-
-    if(divDia){
-
-      divDia.classList.add("ocupado");
-    }
-  });
 }
 
 /* ===================================== */
@@ -630,6 +608,7 @@ const horas = [
   "14:00",
   "15:00",
   "16:00"
+
 ];
 
 const timeSlots =
@@ -657,6 +636,7 @@ horas.forEach((hora) => {
       .forEach((t) => {
 
         t.classList.remove("selected");
+
       });
 
     div.classList.add("selected");
@@ -664,13 +644,15 @@ horas.forEach((hora) => {
     selectedTime = hora;
 
     actualizarResumen();
+
   });
 
   timeSlots.appendChild(div);
+
 });
 
 /* ===================================== */
-/* HORARIOS OCUPADOS */
+/* BLOQUEAR HORARIOS */
 /* ===================================== */
 
 function cargarHorariosOcupados(){
@@ -682,6 +664,7 @@ function cargarHorariosOcupados(){
       btn.classList.remove("ocupado");
 
       btn.style.pointerEvents = "auto";
+
     });
 
   agendamientos.forEach((a) => {
@@ -691,15 +674,10 @@ function cargarHorariosOcupados(){
     const fecha =
       new Date(a.fecha.seconds * 1000);
 
-    const fechaLocal = new Date(
-      fecha.getTime() -
-      fecha.getTimezoneOffset() * 60000
-    );
+    const fechaAgenda =
+      fecha.toISOString().split("T")[0];
 
-    const fechaTexto =
-      fechaLocal.toISOString().split("T")[0];
-
-    if(fechaTexto === selectedDate){
+    if(fechaAgenda === selectedDate){
 
       document
         .querySelectorAll(".time-slot")
@@ -710,145 +688,15 @@ function cargarHorariosOcupados(){
             btn.classList.add("ocupado");
 
             btn.style.pointerEvents = "none";
+
           }
+
         });
+
     }
+
   });
-}
 
-/* ===================================== */
-/* RESUMEN */
-/* ===================================== */
-
-function actualizarResumen(){
-
-  const summary =
-    document.getElementById("summary");
-
-  summary.innerHTML = `
-
-    <p>
-      <strong>Equipo:</strong>
-      ${selectedForklift?.Modelo || "-"}
-    </p>
-
-    <p>
-      <strong>Serie:</strong>
-      ${selectedForklift?.Serie || "-"}
-    </p>
-
-    <p>
-      <strong>Fecha:</strong>
-      ${selectedDate || "-"}
-    </p>
-
-    <p>
-      <strong>Hora:</strong>
-      ${selectedTime || "-"}
-    </p>
-
-  `;
-}
-
-/* ===================================== */
-/* GUARDAR */
-/* ===================================== */
-
-window.confirmarMantenimiento =
-async function(){
-
-  if(
-    !selectedForklift ||
-    !selectedDate ||
-    !selectedTime
-  ){
-
-    alert("Complete toda la información");
-
-    return;
-  }
-
-  try{
-
-    const existente =
-      agendamientos.find(
-        a => a.serie === selectedForklift.Serie
-      );
-
-    if(existente){
-
-      await updateDoc(
-
-        doc(
-          db,
-          "AGENDAMIENTO",
-          existente.firebaseId
-        ),
-
-        {
-
-          fecha:
-            new Date(
-              selectedDate + "T00:00:00"
-            ),
-
-          hora: selectedTime,
-
-          estado: "PENDIENTE"
-        }
-      );
-
-    }else{
-
-      await addDoc(
-
-        collection(db, "AGENDAMIENTO"),
-
-        {
-
-          serie:
-            selectedForklift.Serie,
-
-          modelo:
-            selectedForklift.Modelo || "",
-
-          fecha:
-            new Date(
-              selectedDate + "T00:00:00"
-            ),
-
-          hora:
-            selectedTime,
-
-          estado:
-            "PENDIENTE",
-
-          fechaCreacion:
-            new Date()
-        }
-      );
-    }
-
-    mostrarNotificacion(
-      "Mantenimiento agendado correctamente"
-    );
-
-    selectedForklift = null;
-
-    selectedDate = null;
-
-    selectedTime = null;
-
-    actualizarResumen();
-
-    await cargarDatos();
-
-  }catch(error){
-
-    console.log(error);
-
-    alert("ERROR GUARDANDO");
-  }
 }
 
 /* ===================================== */
@@ -860,40 +708,35 @@ function mostrarAgendaDelDia(fechaTexto){
   const container =
     document.getElementById("agendaDia");
 
-  const agendasDelDia = [];
+  const agendasDelDia =
+    agendamientos.filter((a) => {
 
-  agendamientos.forEach((a) => {
+      if(!a.fecha?.seconds) return false;
 
-    if(!a.fecha?.seconds) return;
+      const fecha =
+        new Date(a.fecha.seconds * 1000);
 
-    const fecha =
-      new Date(a.fecha.seconds * 1000);
+      const fechaAgenda =
+        fecha.toISOString().split("T")[0];
 
-    const fechaLocal = new Date(
-      fecha.getTime() -
-      fecha.getTimezoneOffset() * 60000
-    );
+      return fechaAgenda === fechaTexto;
 
-    const fechaAgenda =
-      fechaLocal.toISOString().split("T")[0];
-
-    if(fechaAgenda === fechaTexto){
-
-      agendasDelDia.push(a);
-    }
-  });
+    });
 
   if(agendasDelDia.length === 0){
 
     container.innerHTML = `
 
-      <p>
+      <div class="sin-equipos">
+
         No existen mantenimientos programados
-      </p>
+
+      </div>
 
     `;
 
     return;
+
   }
 
   agendasDelDia.sort((a,b) => {
@@ -930,7 +773,134 @@ function mostrarAgendaDelDia(fechaTexto){
       </div>
 
     `;
+
   });
+
+}
+
+/* ===================================== */
+/* RESUMEN */
+/* ===================================== */
+
+function actualizarResumen(){
+
+  const summary =
+    document.getElementById("summary");
+
+  summary.innerHTML = `
+
+    <p>
+      <strong>Equipo:</strong>
+      ${selectedForklift?.Modelo || "-"}
+    </p>
+
+    <p>
+      <strong>Serie:</strong>
+      ${selectedForklift?.Serie || "-"}
+    </p>
+
+    <p>
+      <strong>Fecha:</strong>
+      ${selectedDate || "-"}
+    </p>
+
+    <p>
+      <strong>Hora:</strong>
+      ${selectedTime || "-"}
+    </p>
+
+  `;
+
+}
+
+/* ===================================== */
+/* GUARDAR */
+/* ===================================== */
+
+window.confirmarMantenimiento =
+async function(){
+
+  if(
+    !selectedForklift ||
+    !selectedDate ||
+    !selectedTime
+  ){
+
+    alert("Complete toda la información");
+
+    return;
+
+  }
+
+  try{
+
+    const existente =
+      agendamientos.find(
+        a => a.serie === selectedForklift.Serie
+      );
+
+    if(existente){
+
+      alert(
+        "Este equipo ya tiene programación"
+      );
+
+      return;
+
+    }
+
+    await addDoc(
+
+      collection(db, "AGENDAMIENTO"),
+
+      {
+
+        serie:
+          selectedForklift.Serie,
+
+        modelo:
+          selectedForklift.Modelo || "",
+
+        fecha:
+          new Date(
+            selectedDate + "T00:00:00"
+          ),
+
+        hora:
+          selectedTime,
+
+        estado:
+          "PENDIENTE",
+
+        fechaCreacion:
+          new Date()
+
+      }
+
+    );
+
+    mostrarNotificacion(
+      "Mantenimiento agendado correctamente"
+    );
+
+    selectedForklift = null;
+
+    selectedDate = null;
+
+    selectedTime = null;
+
+    actualizarResumen();
+
+    await cargarDatos();
+
+  }catch(error){
+
+    console.log(error);
+
+    alert("ERROR GUARDANDO");
+
+  }
+
 }
 
 /* ===================================== */
@@ -951,6 +921,7 @@ function mostrarNotificacion(texto){
     n.style.display = "none";
 
   }, 3000);
+
 }
 
 /* ===================================== */
@@ -963,14 +934,10 @@ onSnapshot(
 
     await cargarDatos();
 
-    if(selectedDate){
-
-      mostrarAgendaDelDia(selectedDate);
-
-      cargarHorariosOcupados();
-    }
   }
 );
 
 </script>
 
+</body>
+</html>
