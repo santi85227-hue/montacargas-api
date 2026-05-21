@@ -585,12 +585,10 @@ function renderCalendario(){
     primerDia.getDay();
 
   if(inicioSemana === 0){
-
     inicioSemana = 7;
   }
 
   const nombresDias = [
-
     "Lun",
     "Mar",
     "Mié",
@@ -598,7 +596,6 @@ function renderCalendario(){
     "Vie",
     "Sáb",
     "Dom"
-
   ];
 
   nombresDias.forEach((nombre) => {
@@ -615,6 +612,7 @@ function renderCalendario(){
 
   });
 
+  // ESPACIOS VACIOS
   for(let i = 1; i < inicioSemana; i++){
 
     const empty =
@@ -623,30 +621,43 @@ function renderCalendario(){
     calendar.appendChild(empty);
   }
 
+  // DIAS DEL MES
   for(let dia = 1; dia <= diasMes; dia++){
 
     const fechaTexto =
       `2026-05-${String(dia).padStart(2,'0')}`;
 
     const agendasDia =
-  agendamientos.filter((a) => {
+      agendamientos.filter((a) => {
 
-    if(
-      clienteSeleccionado !== "TODOS"
-    ){
+        if(!a.fecha?.seconds){
+          return false;
+        }
 
-      const equipo =
-        montacargas.find(
-          e => e.Serie === a.serie
-        );
+        const fecha =
+          new Date(a.fecha.seconds * 1000);
 
-      if(
-        !equipo ||
-        equipo.Royal !== clienteSeleccionado
-      ){
-        return false;
-      }
-    }
+        const fechaAgenda =
+          fecha.toISOString().split("T")[0];
+
+        // FILTRO CLIENTE
+        if(clienteSeleccionado !== "TODOS"){
+
+          const equipo =
+            montacargas.find(
+              e => e.Serie === a.serie
+            );
+
+          if(
+            !equipo ||
+            equipo.Royal !== clienteSeleccionado
+          ){
+            return false;
+          }
+        }
+
+        return fechaAgenda === fechaTexto;
+      });
 
     const day =
       document.createElement("div");
@@ -656,7 +667,6 @@ function renderCalendario(){
     day.id = `dia-${dia}`;
 
     if(agendasDia.length > 0){
-
       day.classList.add("ocupado");
     }
 
@@ -675,7 +685,6 @@ function renderCalendario(){
       document
         .querySelectorAll(".day")
         .forEach((d) => {
-
           d.classList.remove("selected");
         });
 
@@ -688,7 +697,6 @@ function renderCalendario(){
       document
         .querySelectorAll(".time-slot")
         .forEach((t) => {
-
           t.classList.remove("selected");
         });
 
@@ -702,7 +710,6 @@ function renderCalendario(){
     calendar.appendChild(day);
   }
 }
-
 /* ===================================== */
 /* HORARIOS */
 /* ===================================== */
@@ -819,7 +826,9 @@ function mostrarAgendaDelDia(fechaTexto){
 
   agendamientos.forEach((a) => {
 
-    if(!a.fecha?.seconds) return;
+    if(!a.fecha?.seconds){
+      return;
+    }
 
     const fecha =
       new Date(a.fecha.seconds * 1000);
@@ -829,20 +838,24 @@ function mostrarAgendaDelDia(fechaTexto){
 
     if(fechaAgenda === fechaTexto){
 
-  if(clienteSeleccionado !== "TODOS"){
+      // FILTRO CLIENTE
+      if(clienteSeleccionado !== "TODOS"){
 
-    const equipo =
-      montacargas.find(
-        e => e.Serie === a.serie
-      );
+        const equipo =
+          montacargas.find(
+            e => e.Serie === a.serie
+          );
 
-    if(
-      !equipo ||
-      equipo.Royal !== clienteSeleccionado
-    ){
-      return;
+        if(
+          !equipo ||
+          equipo.Royal !== clienteSeleccionado
+        ){
+          return;
+        }
+      }
+
+      agendasDelDia.push(a);
     }
-  }
   });
 
   if(agendasDelDia.length === 0){
@@ -857,7 +870,6 @@ function mostrarAgendaDelDia(fechaTexto){
   }
 
   agendasDelDia.sort((a,b) => {
-
     return a.hora.localeCompare(b.hora);
   });
 
@@ -888,7 +900,10 @@ function mostrarAgendaDelDia(fechaTexto){
           ${a.estado}
         </p>
 
-        <p style="margin-top:10px;color:#2563eb">
+        <p style="
+          margin-top:10px;
+          color:#2563eb;
+        ">
           CLICK PARA MODIFICAR
         </p>
 
@@ -902,6 +917,10 @@ function mostrarAgendaDelDia(fechaTexto){
       document.getElementById(
         `agenda-${a.firebaseId}`
       );
+
+    if(!card){
+      return;
+    }
 
     card.addEventListener("click", () => {
 
@@ -933,7 +952,6 @@ function mostrarAgendaDelDia(fechaTexto){
           t.classList.remove("selected");
 
           if(t.dataset.hora === a.hora){
-
             t.classList.add("selected");
           }
         });
@@ -941,7 +959,6 @@ function mostrarAgendaDelDia(fechaTexto){
       document
         .querySelectorAll(".day")
         .forEach((d) => {
-
           d.classList.remove("selected");
         });
 
@@ -954,7 +971,6 @@ function mostrarAgendaDelDia(fechaTexto){
         );
 
       if(diaElemento){
-
         diaElemento.classList.add("selected");
       }
 
@@ -968,7 +984,6 @@ function mostrarAgendaDelDia(fechaTexto){
     });
   });
 }
-
 /* ===================================== */
 /* RESUMEN */
 /* ===================================== */
