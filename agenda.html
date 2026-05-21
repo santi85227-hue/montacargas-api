@@ -1166,7 +1166,7 @@ onSnapshot(
     await cargarDatos();
   }
 );
-    /* ===================================== */
+/* ===================================== */
 /* CLIENTES */
 /* ===================================== */
 
@@ -1175,12 +1175,16 @@ function renderClientes(){
   const select =
     document.getElementById("clienteSelect");
 
+  // LIMPIAR
   select.innerHTML = "";
 
+  // OBTENER CLIENTES UNICOS
   const clientes = [
     "TODOS",
     ...new Set(
-      montacargas.map(e => e.Royal || "SIN CLIENTE")
+      montacargas
+        .map(e => e.Royal)
+        .filter(Boolean)
     )
   ];
 
@@ -1199,19 +1203,22 @@ function renderClientes(){
 
   select.value = clienteSeleccionado;
 
-  select.addEventListener("change", () => {
+  // EVITAR MULTIPLES EVENTOS
+  select.onchange = () => {
 
-    clienteSeleccionado = select.value;
+    clienteSeleccionado =
+      select.value;
 
     renderForklifts();
 
     renderCalendario();
 
-    document.getElementById("agendaDia").innerHTML =
+    document.getElementById(
+      "agendaDia"
+    ).innerHTML =
       "Seleccione un día del calendario";
-  });
+  };
 }
-
 </script>
 
 </body>
