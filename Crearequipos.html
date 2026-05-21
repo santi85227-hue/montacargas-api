@@ -181,8 +181,8 @@ FALSE
     GUARDAR EQUIPO
 </button>
 
-<button class="btn" onclick="cargueMasivo()">
-    CARGUE MASIVO
+<button class="btn btn-masivo" onclick="cargueMasivo()">
+    📥 CARGUE MASIVO
 </button>
 
 <div id="notification" class="notification"></div>
@@ -387,6 +387,17 @@ function mostrarNotificacion(texto, error){
     n.style.display = "none";
 
   }, 3000);
+
+}
+
+    /* ==================================== */
+/* REDIRECCION CARGUE MASIVO */
+/* ==================================== */
+
+window.cargueMasivo = function(){
+
+  window.location.href =
+    "carguemasivo.html";
 
 }
 
