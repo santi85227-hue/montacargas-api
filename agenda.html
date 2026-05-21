@@ -465,21 +465,35 @@ function renderForklifts(){
   container.innerHTML = "";
 
   const equiposDisponibles =
-  montacargas.filter((f) => {
+    montacargas.filter((f) => {
 
-    if(
-      clienteSeleccionado !== "TODOS" &&
-      f.Royal !== clienteSeleccionado
-    ){
-      return false;
-    }
+      // FILTRO CLIENTE
+      if(
+        clienteSeleccionado !== "TODOS" &&
+        f.Royal !== clienteSeleccionado
+      ){
+        return false;
+      }
+
+      // VALIDAR SI YA ESTA AGENDADO
+      const yaExiste =
+        agendamientos.find(
+          a => a.serie === f.Serie
+        );
+
+      return !yaExiste;
+    });
 
   if(equiposDisponibles.length === 0){
 
     container.innerHTML = `
+
       <div class="sin-equipos">
+
         No existen equipos disponibles
+
       </div>
+
     `;
 
     return;
@@ -488,6 +502,7 @@ function renderForklifts(){
   equiposDisponibles.forEach((f) => {
 
     container.innerHTML += `
+
       <div
         class="forklift-card"
         id="equipo-${f.Serie}"
@@ -502,7 +517,7 @@ function renderForklifts(){
         </div>
 
         <div class="info">
-          Royal: ${f.Royal || "-"}
+          Cliente: ${f.Royal || "-"}
         </div>
 
         <div class="info">
@@ -510,13 +525,16 @@ function renderForklifts(){
         </div>
 
       </div>
+
     `;
   });
 
   equiposDisponibles.forEach((f) => {
 
     const card =
-      document.getElementById(`equipo-${f.Serie}`);
+      document.getElementById(
+        `equipo-${f.Serie}`
+      );
 
     if(!card) return;
 
@@ -539,7 +557,6 @@ function renderForklifts(){
     });
   });
 }
-
 /* ===================================== */
 /* CALENDARIO */
 /* ===================================== */
