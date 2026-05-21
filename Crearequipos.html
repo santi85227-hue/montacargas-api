@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Crear Equipos</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial, Helvetica, sans-serif;
+    background:#f4f6f9;
+    padding:30px;
+}
+
+.container{
+    max-width:700px;
+    margin:auto;
+}
+
+.card{
+    background:white;
+    border-radius:16px;
+    padding:30px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.1);
+}
+
+h1{
+    margin-bottom:25px;
+    color:#1f2937;
+}
+
+.form-group{
+    margin-bottom:18px;
+}
+
+label{
+    display:block;
+    margin-bottom:8px;
+    font-weight:bold;
+    color:#374151;
+}
+
+input,
+select{
+    width:100%;
+    padding:14px;
+    border:1px solid #d1d5db;
+    border-radius:10px;
+    font-size:16px;
+}
+
+input:focus,
+select:focus{
+    outline:none;
+    border-color:#2563eb;
+}
+
+.btn{
+    width:100%;
+    padding:16px;
+    border:none;
+    border-radius:12px;
+    background:#2563eb;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.btn:hover{
+    background:#1d4ed8;
+}
+
+.notification{
+    margin-top:20px;
+    padding:15px;
+    border-radius:10px;
+    display:none;
+}
+
+.success{
+    background:#dcfce7;
+    color:#166534;
+}
+
+.error{
+    background:#fee2e2;
+    color:#991b1b;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="card">
+
+<h1>🚜 Crear Equipo</h1>
+
+<div class="form-group">
+
+<label>Serie</label>
+
+<input type="text" id="serie">
+
+</div>
+
+<div class="form-group">
+
+<label>Modelo</label>
+
+<input type="text" id="modelo">
+
+</div>
+
+<div class="form-group">
+
+<label>Royal</label>
+
+<input type="text" id="royal">
+
+</div>
+
+<div class="form-group">
+
+<label>Estado</label>
+
+<select id="estado">
+
+<option value="OPERATIVO">
+OPERATIVO
+</option>
+
+<option value="INOPERATIVO">
+INOPERATIVO
+</option>
+
+<option value="MANTENIMIENTO">
+MANTENIMIENTO
+</option>
+
+</select>
+
+</div>
+
+<div class="form-group">
+
+<label>Activo</label>
+
+<select id="activo">
+
+<option value="true">
+TRUE
+</option>
+
+<option value="false">
+FALSE
+</option>
+
+</select>
+
+</div>
+
+<div class="form-group">
+
+<label>Horómetro 1</label>
+
+<input type="number" id="horometro1" value="0">
+
+</div>
+
+<div class="form-group">
+
+<label>Horómetro 2</label>
+
+<input type="number" id="horometro2" value="0">
+
+</div>
+
+<div class="form-group">
+
+<label>Horómetro 3</label>
+
+<input type="number" id="horometro3" value="0">
+
+</div>
+
+<div class="form-group">
+
+<label>Horómetro 4</label>
+
+<input type="number" id="horometro4" value="0">
+
+</div>
+
+<button class="btn" onclick="guardarEquipo()">
+
+GUARDAR EQUIPO
+
+</button>
+
+<div id="notification" class="notification"></div>
+
+</div>
+
+</div>
+
+<script type="module">
+
+/* ==================================== */
+/* FIREBASE */
+/* ==================================== */
+
+import { initializeApp }
+
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+
+  getFirestore,
+  collection,
+  addDoc
+
+}
+
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* ==================================== */
+/* CONFIG FIREBASE */
+/* ==================================== */
+
+const firebaseConfig = {
+
+  apiKey: "AIzaSyCWxAs_JLDo0tX80wMe1rlHFx6hCU79DwQ",
+
+  authDomain: "montacargas-tecnicos.firebaseapp.com",
+
+  projectId: "montacargas-tecnicos",
+
+  storageBucket: "montacargas-tecnicos.firebasestorage.app",
+
+  messagingSenderId: "321697235731",
+
+  appId: "1:321697235731:web:d54b1bf957d3a95641d0e6"
+
+};
+
+/* ==================================== */
+/* INICIALIZAR */
+/* ==================================== */
+
+const app = initializeApp(firebaseConfig);
+
+const db = getFirestore(app);
+
+/* ==================================== */
+/* GUARDAR */
+/* ==================================== */
+
+window.guardarEquipo = async function(){
+
+  const Serie =
+    document.getElementById("serie").value;
+
+  const Modelo =
+    document.getElementById("modelo").value;
+
+  const Royal =
+    document.getElementById("royal").value;
+
+  const Estado =
+    document.getElementById("estado").value;
+
+  const Activo =
+    document.getElementById("activo").value === "true";
+
+  const Horometro1 =
+    parseInt(
+      document.getElementById("horometro1").value
+    ) || 0;
+
+  const Horometro2 =
+    parseInt(
+      document.getElementById("horometro2").value
+    ) || 0;
+
+  const Horometro3 =
+    parseInt(
+      document.getElementById("horometro3").value
+    ) || 0;
+
+  const Horometro4 =
+    parseInt(
+      document.getElementById("horometro4").value
+    ) || 0;
+
+  if(
+    Serie === "" ||
+    Modelo === ""
+  ){
+
+    mostrarNotificacion(
+      "Complete los campos obligatorios",
+      true
+    );
+
+    return;
+  }
+
+  try{
+
+    await addDoc(
+
+      collection(db, "Equipos"),
+
+      {
+
+        Serie,
+        Modelo,
+        Royal,
+        Estado,
+        Activo,
+
+        Horometro1,
+        Horometro2,
+        Horometro3,
+        Horometro4
+
+      }
+
+    );
+
+    mostrarNotificacion(
+      "Equipo creado correctamente",
+      false
+    );
+
+    limpiarFormulario();
+
+  }catch(error){
+
+    console.log(error);
+
+    mostrarNotificacion(
+      "Error guardando equipo",
+      true
+    );
+
+  }
+
+}
+
+/* ==================================== */
+/* LIMPIAR */
+/* ==================================== */
+
+function limpiarFormulario(){
+
+  document.getElementById("serie").value = "";
+
+  document.getElementById("modelo").value = "";
+
+  document.getElementById("royal").value = "";
+
+  document.getElementById("estado").value =
+    "OPERATIVO";
+
+  document.getElementById("activo").value =
+    "true";
+
+  document.getElementById("horometro1").value = 0;
+
+  document.getElementById("horometro2").value = 0;
+
+  document.getElementById("horometro3").value = 0;
+
+  document.getElementById("horometro4").value = 0;
+
+}
+
+/* ==================================== */
+/* NOTIFICACION */
+/* ==================================== */
+
+function mostrarNotificacion(texto, error){
+
+  const n =
+    document.getElementById("notification");
+
+  n.innerText = texto;
+
+  n.style.display = "block";
+
+  n.className =
+    error
+    ? "notification error"
+    : "notification success";
+
+  setTimeout(() => {
+
+    n.style.display = "none";
+
+  }, 3000);
+
+}
+
+</script>
+
+</body>
+</html>
