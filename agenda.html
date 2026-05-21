@@ -201,6 +201,30 @@ h1{
     border-radius:12px;
     margin-top:20px;
 }
+    .agenda-item{
+
+    border:1px solid #d1d5db;
+
+    border-radius:12px;
+
+    padding:15px;
+
+    margin-bottom:10px;
+
+    background:white;
+}
+
+.agenda-item h3{
+
+    color:#2563eb;
+
+    margin-bottom:8px;
+}
+
+.agenda-item p{
+
+    margin:4px 0;
+}
 
 .notification{
     position:fixed;
@@ -458,7 +482,9 @@ function renderForklifts(){
 
       selectedForklift = f;
 
-      actualizarResumen();
+        actualizarResumen();        
+        cargarHorariosOcupados();
+        mostrarAgendaDelDia(selectedDate);
     });
   });
 }
@@ -803,6 +829,82 @@ onSnapshot(
     await cargarDatos();
   }
 );
+    /* ===================================== */
+/* MOSTRAR PROGRAMACION DEL DIA */
+/* ===================================== */
+
+function mostrarAgendaDelDia(fechaTexto){
+
+  const container =
+    document.getElementById("agendaDia");
+
+  const agendasDelDia = [];
+
+  agendamientos.forEach((a) => {
+
+    if(!a.fecha?.seconds) return;
+
+    const fecha =
+      new Date(a.fecha.seconds * 1000);
+
+    const fechaAgenda =
+      fecha.toISOString().split("T")[0];
+
+    if(fechaAgenda === fechaTexto){
+
+      agendasDelDia.push(a);
+    }
+  });
+
+  if(agendasDelDia.length === 0){
+
+    container.innerHTML = `
+
+      <p>
+        No existen mantenimientos programados
+      </p>
+
+    `;
+
+    return;
+  }
+
+  agendasDelDia.sort((a,b) => {
+
+    return a.hora.localeCompare(b.hora);
+
+  });
+
+  container.innerHTML = "";
+
+  agendasDelDia.forEach((a) => {
+
+    container.innerHTML += `
+
+      <div class="agenda-item">
+
+        <h3>${a.hora}</h3>
+
+        <p>
+          <strong>Serie:</strong>
+          ${a.serie}
+        </p>
+
+        <p>
+          <strong>Modelo:</strong>
+          ${a.modelo}
+        </p>
+
+        <p>
+          <strong>Estado:</strong>
+          ${a.estado}
+        </p>
+
+      </div>
+
+    `;
+  });
+}
 
 </script>
 </body>
