@@ -124,6 +124,21 @@ h1{
     border:2px solid #1d4ed8 !important;
     color:white !important;
 }
+    .day.disponible{
+    background:#dbeafe;
+    border:2px solid #2563eb;
+}
+
+.day.programado{
+    background:#dcfce7;
+    border:2px solid #16a34a;
+}
+
+.day.bloqueado{
+    background:#fee2e2;
+    border:2px solid #dc2626;
+    color:#991b1b;
+}
 
 .day.ocupado{
     border:2px solid #16a34a;
@@ -679,24 +694,16 @@ const diaSemana =
 
 if(diaSemana === 0 || diaSemana === 6){
 
-  // SABADOS Y DOMINGOS
-  day.style.background = "#fee2e2";
-  day.style.border = "2px solid #dc2626";
-  day.style.color = "#991b1b";
+  day.classList.add("bloqueado");
 
 }else if(agendasDia.length > 0){
 
-  // DIAS CON PROGRAMACION
-  day.style.background = "#dcfce7";
-  day.style.border = "2px solid #16a34a";
+  day.classList.add("programado");
 
 }else{
 
-  // DIAS DISPONIBLES
-  day.style.background = "#dbeafe";
-  day.style.border = "2px solid #2563eb";
+  day.classList.add("disponible");
 }
-
     day.innerHTML = `
       <div class="day-numero">
         ${dia}
@@ -709,7 +716,7 @@ if(diaSemana === 0 || diaSemana === 6){
 
     day.addEventListener("click", () => {
 
-  // NO PERMITIR SABADOS NI DOMINGOS
+  // BLOQUEAR SABADOS Y DOMINGOS
   if(diaSemana === 0 || diaSemana === 6){
 
     mostrarNotificacion(
@@ -719,6 +726,7 @@ if(diaSemana === 0 || diaSemana === 6){
     return;
   }
 
+  // LIMPIAR SELECCION
   document
     .querySelectorAll(".day")
     .forEach((d) => {
@@ -726,12 +734,14 @@ if(diaSemana === 0 || diaSemana === 6){
       d.classList.remove("selected");
     });
 
+  // SELECCIONAR DIA
   day.classList.add("selected");
 
   selectedDate = fechaTexto;
 
   selectedTime = null;
 
+  // LIMPIAR HORARIOS
   document
     .querySelectorAll(".time-slot")
     .forEach((t) => {
@@ -745,14 +755,8 @@ if(diaSemana === 0 || diaSemana === 6){
 
   cargarHorariosOcupados();
 });
-      actualizarResumen();
 
-      mostrarAgendaDelDia(fechaTexto);
-
-      cargarHorariosOcupados();
-    });
-
-    calendar.appendChild(day);
+calendar.appendChild(day);
   }
 }
 /* ===================================== */
