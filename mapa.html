@@ -133,11 +133,11 @@ onSnapshot(collection(db, "ordenes"), (snapshot) => {
 
         const data = docu.data();
 
-        if(data.latitud && data.longitud){
+        if(data.lat && data.lng){
 
             const marker = L.marker([
-                data.latitud,
-                data.longitud
+                data.lat,
+                data.lng
             ]).addTo(map);
 
             marker.bindPopup(`
