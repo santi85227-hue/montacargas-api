@@ -92,7 +92,11 @@ h1{
 .pendiente{
     background:#757575;
 }
-
+    
+.asignada{
+    background:#14b8a6;
+}
+    
 .prioridad{
     margin-top:10px;
     font-weight:bold;
@@ -160,13 +164,7 @@ const db = getFirestore(app);
 
 const container = document.getElementById("ordenes");
 
-    import {
-    addDoc,
-    doc,
-    updateDoc
-}
-        
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    
 
 onSnapshot(collection(db, "ordenes"), (snapshot) => {
 
@@ -180,6 +178,9 @@ onSnapshot(collection(db, "ordenes"), (snapshot) => {
 
         if(data.estado === "EN_CAMINO"){
             estadoClase = "en_camino";
+        }
+        else if(data.estado === "ASIGNADA"){
+            estadoClase = "asignada";
         }
         else if(data.estado === "LLEGADO"){
             estadoClase = "llegado";
@@ -220,7 +221,7 @@ onSnapshot(collection(db, "ordenes"), (snapshot) => {
 
             <p><strong>Cliente:</strong> ${data.clienteNombre || "-"}</p>
 
-            <p><strong>Técnico:</strong> ${data.tecnico || "-"}</p>
+            <p><strong>Técnico:</strong> ${data.tecnicoNombre  || "-"}</p>
 
             <p><strong>Diagnóstico:</strong> ${data.diagnostico || "-"}</p>
 
@@ -503,7 +504,7 @@ function calcularDistancia(
 }
 </script>
 
-</body>
+
 <div class="topbar">
     <button class="btn" onclick="crearOS()">
         CREAR OS
@@ -514,4 +515,5 @@ function calcularDistancia(
         ← VOLVER
     </button>
 </div>
+</body>
 </html>
