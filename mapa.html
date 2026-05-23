@@ -167,6 +167,51 @@ onSnapshot(collection(db, "ordenes"), (snapshot) => {
 
 });
 
+// =======================
+// LEER POSICION TECNICO
+// =======================
+    
+let markersTecnicos = [];
+
+onSnapshot(collection(db, "tecnicos_ubicacion"), (snapshot) => {
+
+    markersTecnicos.forEach(m => map.removeLayer(m));
+
+    markersTecnicos = [];
+
+    snapshot.forEach((docu) => {
+
+        const data = docu.data();
+
+        if(data.latitud && data.longitud){
+
+            const marker = L.marker([
+                data.latitud,
+                data.longitud
+            ]).addTo(map);
+
+            marker.bindPopup(`
+
+                <div class="popup">
+
+                    <strong>Técnico:</strong>
+                    ${data.tecnicoNombre}<br>
+
+                    <strong>Velocidad:</strong>
+                    ${data.velocidad || 0} m/s
+
+                </div>
+
+            `);
+
+            markersTecnicos.push(marker);
+
+        }
+
+    });
+
+});
+
 </script>
 
 </body>
