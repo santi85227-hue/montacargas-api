@@ -150,11 +150,15 @@ onSnapshot(collection(db, "ordenes"), (snapshot) => {
                     <strong>Estado:</strong>
                     ${data.estado || "-"}<br>
 
+                    <strong>Estado Servicio:</strong>
+                    ${data.estado || "-"}<br>
+
                     <strong>Técnico:</strong>
-                    ${data.tecnico || "-"}<br>
+                    ${data.tecnicoNombre || "Sin asignar"}<br>
 
                     <strong>Equipo:</strong>
                     ${data.serial || "-"}
+                    
 
                 </div>
 
