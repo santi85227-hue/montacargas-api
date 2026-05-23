@@ -188,7 +188,7 @@ let markersTecnicos = [];
 
 });
 
-onSnapshot(collection(db, "tecnicos_ubicacion"), (snapshot) => {
+onSnapshot(collection(db, "tecnicos"), (snapshot) => {
 
     markersTecnicos.forEach(m => map.removeLayer(m));
 
