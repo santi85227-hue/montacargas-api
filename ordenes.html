@@ -249,7 +249,7 @@ onSnapshot(collection(db, "ordenes"), (snapshot) => {
 
 });
 async function crearOS(){
-    window.crearOS = crearOS
+    
     console.log("CREANDO OS...")
     try{
 
@@ -365,6 +365,7 @@ async function crearOS(){
     }
 
 }
+    window.crearOS = crearOS
     async function asignarTecnico(
 
     ordenId,
