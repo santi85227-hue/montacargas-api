@@ -156,6 +156,14 @@ const db = getFirestore(app);
 
 const container = document.getElementById("ordenes");
 
+    import {
+    addDoc,
+    doc,
+    updateDoc
+}
+        
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
 onSnapshot(collection(db, "ordenes"), (snapshot) => {
 
     container.innerHTML = "";
@@ -225,6 +233,122 @@ onSnapshot(collection(db, "ordenes"), (snapshot) => {
     });
 
 });
+async function crearOS(){
+
+    try{
+
+        // =========================
+        // DATOS DEMO
+        // =========================
+
+        const nuevaOrden = {
+
+            clienteDireccion: "Calle 15",
+
+            clienteNombre: "Cliente Demo",
+
+            clienteTelefono: "",
+
+            distanciaTecnico: 0,
+
+            equipoId: "1A313102",
+
+            equipoModelo: "RD5200",
+
+            equipoSerie: "",
+
+            estado: "PENDIENTE",
+
+            estadoTecnico: "",
+
+            fechaFinalizacion: "",
+
+            fechaInicioReparacion: "",
+
+            fechaInicioRuta: "",
+
+            fechaLlegadaCliente: "",
+
+            fechaProgramada: new Date()
+                .toISOString()
+                .split("T")[0],
+
+            horaProgramada:
+                new Date().toLocaleTimeString(),
+
+            horometroActual: 1200,
+
+            lat: 3.5190768453211905,
+
+            latitud: 3.5190768453211905,
+
+            longitud: -76.50635994616862,
+
+            prioridad: 5,
+
+            tecnicoId: "",
+
+            tecnicoLat: 0,
+
+            tecnicoLng: 0,
+
+            tecnicoNombre: "",
+
+            tipo: "CORRECTIVO"
+
+        }
+
+        // =========================
+        // CREAR ORDEN
+        // =========================
+
+        const ref = await addDoc(
+
+            collection(db,"ordenes"),
+
+            nuevaOrden
+
+        )
+
+        // =========================
+        // GUARDAR ID
+        // =========================
+
+        await updateDoc(
+
+            doc(db,"ordenes",ref.id),
+
+            {
+                id: ref.id
+            }
+
+        )
+
+        // =========================
+        // ASIGNACION AUTOMATICA
+        // =========================
+
+        asignarTecnico(
+
+            ref.id,
+
+            nuevaOrden.latitud,
+
+            nuevaOrden.longitud
+
+        )
+
+        alert("OS creada correctamente")
+
+    }catch(e){
+
+        console.error(e)
+
+        alert("Error creando OS")
+
+    }
+
+}
 
 </script>
 
