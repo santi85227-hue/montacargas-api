@@ -132,7 +132,11 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import {
     getFirestore,
     collection,
-    onSnapshot
+    onSnapshot,
+    addDoc,
+    updateDoc,
+    doc,
+    getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -349,7 +353,154 @@ async function crearOS(){
     }
 
 }
+    async function asignarTecnico(
 
+    ordenId,
+    latitud,
+    longitud
+
+){
+
+    const snapshot = await getDocs(
+        collection(db,"tecnicos")
+    )
+
+    let mejorTecnico = null
+
+    let menorDistancia = 999999
+
+    snapshot.forEach((docu)=>{
+
+        const t = docu.data()
+
+        // SOLO DISPONIBLES
+
+        if(
+            t.online === true &&
+            t.estado !== "OCUPADO"
+        ){
+
+            const distancia = calcularDistancia(
+
+                latitud,
+                longitud,
+
+                t.lat || 0,
+                t.lng || 0
+
+            )
+
+            if(distancia < menorDistancia){
+
+                menorDistancia = distancia
+
+                mejorTecnico = {
+
+                    id: docu.id,
+
+                    ...t,
+
+                    distancia
+
+                }
+
+            }
+
+        }
+
+    })
+
+    if(mejorTecnico){
+
+        // ACTUALIZAR ORDEN
+
+        await updateDoc(
+
+            doc(db,"ordenes",ordenId),
+
+            {
+
+                tecnicoId:
+                    mejorTecnico.id,
+
+                tecnicoNombre:
+                    mejorTecnico.NOMBRE,
+
+                tecnicoLat:
+                    mejorTecnico.lat,
+
+                tecnicoLng:
+                    mejorTecnico.lng,
+
+                distanciaTecnico:
+                    Math.round(
+                        mejorTecnico.distancia
+                    ),
+
+                estado:"ASIGNADA"
+
+            }
+
+        )
+
+        // ACTUALIZAR TECNICO
+
+        await updateDoc(
+
+            doc(db,"tecnicos",mejorTecnico.id),
+
+            {
+
+                estado:"OCUPADO",
+
+                ordenActual:ordenId
+
+            }
+
+        )
+
+    }
+
+}
+function calcularDistancia(
+    lat1,
+    lon1,
+    lat2,
+    lon2
+){
+
+    const R = 6371
+
+    const dLat =
+        (lat2-lat1) * Math.PI/180
+
+    const dLon =
+        (lon2-lon1) * Math.PI/180
+
+    const a =
+
+        Math.sin(dLat/2) *
+        Math.sin(dLat/2)
+
+        +
+
+        Math.cos(lat1*Math.PI/180) *
+        Math.cos(lat2*Math.PI/180)
+
+        *
+
+        Math.sin(dLon/2) *
+        Math.sin(dLon/2)
+
+    const c =
+        2*Math.atan2(
+            Math.sqrt(a),
+            Math.sqrt(1-a)
+        )
+
+    return R*c
+
+}
 </script>
 
 </body>
