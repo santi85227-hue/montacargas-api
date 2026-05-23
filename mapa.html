@@ -133,11 +133,11 @@ onSnapshot(collection(db, "ordenes"), (snapshot) => {
 
         const data = docu.data();
 
-        if(data.lat && data.lng){
+        if(data.latitud && data.longitud){
 
             const marker = L.marker([
-                data.lat,
-                data.lng
+                data.latitud,
+                data.longitud
             ]).addTo(map);
 
             marker.bindPopup(`
@@ -198,11 +198,11 @@ onSnapshot(collection(db, "tecnicos"), (snapshot) => {
 
         const data = docu.data();
 
-        if(data.latitud && data.longitud){
+        if(data.lat && data.lng){
 
         const marker = L.marker([
-            data.latitud,
-            data.longitud
+            data.lat,
+            data.lng
         ],{
             icon: clienteIcon
         }
