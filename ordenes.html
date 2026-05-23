@@ -389,7 +389,8 @@ async function crearOS(){
         // SOLO DISPONIBLES
 
         if(
-            t.online === true &&
+            t.online === true ||
+            t.online === "true" &&
             t.estado !== "OCUPADO"
         ){
 
