@@ -1243,13 +1243,14 @@ function renderClientes(){
 
   // OBTENER CLIENTES UNICOS
   const clientes = [
-    "TODOS",
-    ...new Set(
-      montacargas
-        .map(e => e.Cliente)
-        .filter(Boolean)
-    )
-  ];
+  ...new Set(
+    montacargas
+      .map(e => e.Cliente)
+      .filter(Boolean)
+  )
+].sort((a,b) => a.localeCompare(b));
+
+clientes.unshift("TODOS");
 
   clientes.forEach((cliente) => {
 
