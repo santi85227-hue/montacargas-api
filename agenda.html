@@ -1051,7 +1051,12 @@ function actualizarResumen(){
 
   summary.innerHTML = `
     <p>
-      <strong>Equipo:</strong>
+      <strong>Cliente:</strong>
+      ${selectedForklift?.Cliente || "-"}
+    </p>
+    
+    <p>
+      <strong>Modelo:</strong>
       ${selectedForklift?.Modelo || "-"}
     </p>
 
@@ -1156,7 +1161,9 @@ async function(){
         collection(db, "AGENDAMIENTO"),
 
         {
-
+          cliente:
+              selectedForklift.Cliente,
+            
           serie:
             selectedForklift.Serie,
 
