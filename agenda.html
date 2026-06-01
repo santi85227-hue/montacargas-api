@@ -585,7 +585,7 @@ function renderCalendario(){
 
   const year = 2026;
 
-  const month = 4;
+  const month = 6;
 
   const primerDia =
     new Date(year, month, 1);
@@ -885,57 +885,35 @@ function mostrarAgendaDelDia(fechaTexto){
       new Date(a.fecha.seconds * 1000);
 
     const fechaAgenda =
-      fecha.toISOString().split("T")[0];
-
-    if(fechaAgenda === fechaTexto){
-
-      // FILTRO CLIENTE
-      if(clienteSeleccionado !== "TODOS"){
-
-        const equipo =
-          montacargas.find(
-            e => e.Serie === a.serie
-          );
-
-        if(
-          !equipo ||
-          equipo.Cliente !== clienteSeleccionado
-        ){
-          return;
+        fecha.toISOString().split("T")[0];
+        if(fechaAgenda === fechaTexto){
+            // FILTRO CLIENTE
+            if(clienteSeleccionado !== "TODOS"){
+                const equipo =
+                    montacargas.find(e => e.Serie === a.serie);
+                        if(!equipo || equipo.Cliente !== clienteSeleccionado){
+                            return;
+                        }
+                    }
+            agendasDelDia.push(a);
         }
-      }
-
-      agendasDelDia.push(a);
-    }
   });
-
-  if(agendasDelDia.length === 0){
-
-    container.innerHTML = `
-      <div class="sin-equipos">
-        No existen mantenimientos programados
-      </div>
-    `;
-
-    return;
+    if(agendasDelDia.length === 0){
+        container.innerHTML = `
+            <div class="sin-equipos">
+                No existen mantenimientos programados
+            </div>;
+            return;
   }
-
   agendasDelDia.sort((a,b) => {
-    return a.hora.localeCompare(b.hora);
+      return a.hora.localeCompare(b.hora);
   });
-
   container.innerHTML = "";
 
   agendasDelDia.forEach((a) => {
-
-    container.innerHTML += `
-      <div
-        class="agenda-item"
-        id="agenda-${a.firebaseId}"
-      >
-
+  container.innerHTML += `
+      <div class="agenda-item" id="agenda-${a.firebaseId}">
         <h3>${a.hora}</h3>
-
         <p>
           <strong>Cliente:</strong>
           ${a.cliente}
