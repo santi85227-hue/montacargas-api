@@ -694,7 +694,7 @@ function renderCalendario(){
   for(let dia = 1; dia <= diasMes; dia++){
 
     const fechaTexto =
-      `2026-05-${String(dia).padStart(2,'0')}`;
+        `${year}-${String(month + 1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
 
     const agendasDia =
       agendamientos.filter((a) => {
