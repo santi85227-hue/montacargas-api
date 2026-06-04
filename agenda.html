@@ -536,66 +536,39 @@ function renderForklifts(){
   const equiposDisponibles =
     montacargas.filter((f) => {
 
-      // FILTRO CLIENTE
-      if(
-        clienteSeleccionado !== "TODOS" &&
-        f.Cliente !== clienteSeleccionado
-      ){
-        return false;
-      }
+        // FILTRO CLIENTE
+        if(
+            clienteSeleccionado !== "TODOS" &&
+            f.Cliente !== clienteSeleccionado
+        ){
+            return false;
+        }
 
-      // VALIDAR SI YA ESTA AGENDADO
-      const yaExiste = agendamientos.find(a => {
+        // ¿YA TIENE MANTENIMIENTO EN EL MES?
+        const yaExiste =
+            agendamientos.find(a => {
 
-    if(a.serie !== f.Serie){
-        return false;
-    }
+                if(a.serie !== f.Serie){
+                    return false;
+                }
 
-    if(!a.fecha?.seconds){
-        return false;
-    }
+                if(!a.fecha?.seconds){
+                    return false;
+                }
 
-    const fecha = new Date(a.fecha.seconds * 1000);
+                const fecha =
+                    new Date(a.fecha.seconds * 1000);
 
-    const fechaAgenda =
-        fecha.getFullYear() + "-" +
-        String(fecha.getMonth()+1).padStart(2,"0") + "-" +
-        String(fecha.getDate()).padStart(2,"0");
+                return (
+                    fecha.getFullYear() === anioSeleccionado &&
+                    fecha.getMonth() === mesSeleccionado
+                );
 
-    return fechaAgenda === selectedDate;
+            });
 
-});
+        return !yaExiste;
 
-  equiposDisponibles.forEach((f) => {
-
-    container.innerHTML += `
-
-      <div
-        class="forklift-card"
-        id="equipo-${f.Serie}"
-      >
-
-        <div class="modelo">
-          ${f.Modelo || "-"}
-        </div>
-
-        <div class="serie">
-          SERIAL: ${f.Serie}
-        </div>
-
-        <div class="info">
-          Cliente: ${f.Cliente || "-"}
-        </div>
-
-        <div class="info">
-          Estado: ${f.Estado || "-"}
-        </div>
-
-      </div>
-
-    `;
-  });
-
+    });
   equiposDisponibles.forEach((f) => {
 
     const card =
