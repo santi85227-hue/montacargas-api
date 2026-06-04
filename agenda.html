@@ -528,74 +528,107 @@ async function cargarAgendamientos(){
 
 function renderForklifts(){
 
-  const container =
-    document.getElementById("forkliftList");
+    const container =
+        document.getElementById("forkliftList");
 
-  container.innerHTML = "";
+    container.innerHTML = "";
 
-  const equiposDisponibles =
-    montacargas.filter((f) => {
+    const equiposDisponibles =
+        montacargas.filter((f) => {
 
-        // FILTRO CLIENTE
-        if(
-            clienteSeleccionado !== "TODOS" &&
-            f.Cliente !== clienteSeleccionado
-        ){
-            return false;
-        }
+            // FILTRO CLIENTE
+            if(
+                clienteSeleccionado !== "TODOS" &&
+                f.Cliente !== clienteSeleccionado
+            ){
+                return false;
+            }
 
-        // ¿YA TIENE MANTENIMIENTO EN EL MES?
-        const yaExiste =
-            agendamientos.find(a => {
+            // YA PROGRAMADO EN EL MES
+            const yaExiste =
+                agendamientos.some(a => {
 
-                if(a.serie !== f.Serie){
-                    return false;
-                }
+                    if(a.serie !== f.Serie){
+                        return false;
+                    }
 
-                if(!a.fecha?.seconds){
-                    return false;
-                }
+                    if(!a.fecha?.seconds){
+                        return false;
+                    }
 
-                const fecha =
-                    new Date(a.fecha.seconds * 1000);
+                    const fecha =
+                        new Date(a.fecha.seconds * 1000);
 
-                return (
-                    fecha.getFullYear() === anioSeleccionado &&
-                    fecha.getMonth() === mesSeleccionado
-                );
+                    return (
+                        fecha.getMonth() === mesSeleccionado &&
+                        fecha.getFullYear() === anioSeleccionado
+                    );
+                });
 
-            });
-
-        return !yaExiste;
-
-    });
-  equiposDisponibles.forEach((f) => {
-
-    const card =
-      document.getElementById(
-        `equipo-${f.Serie}`
-      );
-
-    if(!card) return;
-
-    card.addEventListener("click", () => {
-
-      document
-        .querySelectorAll(".forklift-card")
-        .forEach((c) => {
-
-          c.classList.remove("selected");
+            return !yaExiste;
         });
 
-      card.classList.add("selected");
+    // SI NO HAY EQUIPOS
+    if(equiposDisponibles.length === 0){
 
-      selectedForklift = f;
+        container.innerHTML = `
+            <div class="sin-equipos">
+                No existen equipos pendientes para este mes
+            </div>
+        `;
 
-      agendamientoEditando = null;
+        return;
+    }
 
-      actualizarResumen();
+    // DIBUJAR TARJETAS
+    equiposDisponibles.forEach((f) => {
+
+        container.innerHTML += `
+            <div class="forklift-card" id="equipo-${f.Serie}">
+                <div class="modelo">
+                    ${f.Modelo || "-"}
+                </div>
+
+                <div class="serie">
+                    SERIAL: ${f.Serie}
+                </div>
+
+                <div class="info">
+                    Cliente: ${f.Cliente || "-"}
+                </div>
+
+                <div class="info">
+                    Estado: ${f.Estado || "-"}
+                </div>
+            </div>
+        `;
     });
-  });
+
+    // EVENTOS CLICK
+    equiposDisponibles.forEach((f) => {
+
+        const card =
+            document.getElementById(`equipo-${f.Serie}`);
+
+        if(!card) return;
+
+        card.addEventListener("click", () => {
+
+            document
+                .querySelectorAll(".forklift-card")
+                .forEach(c =>
+                    c.classList.remove("selected")
+                );
+
+            card.classList.add("selected");
+
+            selectedForklift = f;
+
+            agendamientoEditando = null;
+
+            actualizarResumen();
+        });
+    });
 }
 /* ===================================== */
 /* CALENDARIO */
