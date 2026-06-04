@@ -545,28 +545,26 @@ function renderForklifts(){
       }
 
       // VALIDAR SI YA ESTA AGENDADO
-      const yaExiste =
-        agendamientos.find(
-          a => a.serie === f.Serie
-        );
+      cconst yaExiste = agendamientos.find(a => {
 
-      return !yaExiste;
-    });
+    if(a.serie !== f.Serie){
+        return false;
+    }
 
-  if(equiposDisponibles.length === 0){
+    if(!a.fecha?.seconds){
+        return false;
+    }
 
-    container.innerHTML = `
+    const fecha = new Date(a.fecha.seconds * 1000);
 
-      <div class="sin-equipos">
+    const fechaAgenda =
+        fecha.getFullYear() + "-" +
+        String(fecha.getMonth()+1).padStart(2,"0") + "-" +
+        String(fecha.getDate()).padStart(2,"0");
 
-        No existen equipos disponibles
+    return fechaAgenda === selectedDate;
 
-      </div>
-
-    `;
-
-    return;
-  }
+});
 
   equiposDisponibles.forEach((f) => {
 
