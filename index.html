@@ -2,61 +2,246 @@
 <html lang="es">
 
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Royal Rental</title>
+<title>SIMORA - Plataforma de Monitoreo</title>
 
-<link rel="stylesheet" href="styles.css">
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+    background:#0b1633;
+    height:100vh;
+    overflow:hidden;
+}
+
+.layout{
+    display:flex;
+    height:100vh;
+}
+
+/* MENU IZQUIERDO */
+
+.sidebar{
+    width:280px;
+    background:#101d3d;
+    padding:20px;
+    display:flex;
+    flex-direction:column;
+    box-shadow:4px 0 15px rgba(0,0,0,.25);
+}
+
+.logo{
+    text-align:center;
+    color:white;
+    margin-bottom:40px;
+}
+
+.logo h1{
+    font-size:32px;
+}
+
+.logo p{
+    color:#9ca3af;
+    margin-top:10px;
+}
+
+.menu{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+
+.menu-item{
+    background:#1c2948;
+    color:white;
+    padding:18px;
+    border-radius:14px;
+    cursor:pointer;
+    transition:.3s;
+    border-left:5px solid transparent;
+}
+
+.menu-item:hover{
+    background:#24365f;
+}
+
+.menu-item.active{
+    border-left:5px solid #2ea8ff;
+    background:#24365f;
+}
+
+.menu-item h3{
+    color:#2ea8ff;
+    margin-bottom:5px;
+}
+
+.menu-item p{
+    font-size:14px;
+}
+
+/* CONTENIDO */
+
+.content{
+    flex:1;
+    background:#f4f6f9;
+    padding:20px;
+    overflow:auto;
+}
+
+.header{
+    background:white;
+    padding:20px;
+    border-radius:15px;
+    margin-bottom:20px;
+    box-shadow:0 3px 10px rgba(0,0,0,.1);
+}
+
+.header h2{
+    color:#111827;
+}
+
+.contenedorVista{
+    background:white;
+    border-radius:15px;
+    box-shadow:0 3px 10px rgba(0,0,0,.1);
+    overflow:hidden;
+}
+
+iframe{
+    width:100%;
+    height:calc(100vh - 180px);
+    border:none;
+}
+
+</style>
 
 </head>
 
 <body>
 
-<div class="container">
+<div class="layout">
 
-    <h1>ROYAL RENTAL</h1>
+    <!-- MENU -->
 
-    <p class="subtitle">
-        Plataforma de Monitoreo de Montacargas - SIMORA
-    </p>
+    <div class="sidebar">
 
-    <div class="cards">
+        <div class="logo">
+            <h1>ROYAL RENTAL</h1>
+            <p>SIMORA</p>
+        </div>
 
-        <a href="/Equipos.html" class="card">
-            <h2>Equipos</h2>
-            <p>Estado y control remoto</p>
-        </a>
+        <div class="menu">
 
-        <a href="/ordenes.html" class="card">
-            <h2>Órdenes</h2>
-            <p>Gestión de servicios técnicos</p>
-        </a>
+            <div class="menu-item active"
+                 onclick="cargarVista(this,'equipos.html')">
 
-        <a href="/mapa.html" class="card">
-            <h2>Mapa</h2>
-            <p>Ubicación GPS</p>
-        </a>
+                <h3>Equipos</h3>
+                <p>Estado y control remoto</p>
 
-        <a href="/agenda.html" class="card">
-            <h2>Agenda Preventivos</h2>
-            <p>Agendamiento Mantenimientos Preventivos</p>
-        </a>
-        
-        <a href="/dashboard.html" class="card">
-            <h2>Dashboard</h2>
-            <p>KPI y continuidad operacional</p>
-        </a>
-        
-        <a href="/Crearequipos.html" class="card">
-            <h2>Crear Equipos</h2>
-            <p>Creación Equipos</p>
-        </a>
-        
+            </div>
+
+            <div class="menu-item"
+                 onclick="cargarVista(this,'ordenes.html')">
+
+                <h3>Órdenes</h3>
+                <p>Servicios técnicos</p>
+
+            </div>
+
+            <div class="menu-item"
+                 onclick="cargarVista(this,'mapa.html')">
+
+                <h3>Mapa</h3>
+                <p>Ubicación GPS</p>
+
+            </div>
+
+            <div class="menu-item"
+                 onclick="cargarVista(this,'preventivos.html')">
+
+                <h3>Preventivos</h3>
+                <p>Agenda de mantenimientos</p>
+
+            </div>
+
+            <div class="menu-item"
+                 onclick="cargarVista(this,'dashboard.html')">
+
+                <h3>Dashboard</h3>
+                <p>KPI operacionales</p>
+
+            </div>
+
+            <div class="menu-item"
+                 onclick="cargarVista(this,'crearEquipos.html')">
+
+                <h3>Crear Equipos</h3>
+                <p>Administración</p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- CONTENIDO -->
+
+    <div class="content">
+
+        <div class="header">
+
+            <h2 id="tituloVista">
+                Equipos
+            </h2>
+
+        </div>
+
+        <div class="contenedorVista">
+
+            <iframe
+                id="visor"
+                src="equipos.html">
+            </iframe>
+
+        </div>
 
     </div>
 
 </div>
 
+<script>
+
+function cargarVista(elemento,url){
+
+    document
+        .querySelectorAll(".menu-item")
+        .forEach(item=>{
+            item.classList.remove("active");
+        });
+
+    elemento.classList.add("active");
+
+    document
+        .getElementById("visor")
+        .src = url;
+
+    document
+        .getElementById("tituloVista")
+        .innerText =
+            elemento.querySelector("h3").innerText;
+}
+
+</script>
+
 </body>
+
 </html>
