@@ -5,9 +5,21 @@ const app = express();
 
 app.use(express.static(__dirname));
 
-app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "index.html"));
+app.get("/estado", (req, res) => {
+
+    const id = req.query.id;
+
+    // Ejemplo temporal
+    res.json({
+        id: id,
+        activo: true
+    });
+
 });
+
+//app.get("/estado", (req, res) => {
+//    res.sendFile(path.join(__dirname, "index.html"));
+//});
 
 const PORT = process.env.PORT || 3000;
 
