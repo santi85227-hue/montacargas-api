@@ -12,7 +12,7 @@ app.get("/estado", (req, res) => {
     // Ejemplo temporal
     res.json({
         id: id,
-        activo: true
+        Activo: true
     });
 
 });
